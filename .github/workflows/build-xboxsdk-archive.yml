@@ -51,8 +51,16 @@ jobs:
           set -euo pipefail
           mapfile -t entries < <(tar -tzf xboxsdk.tar.gz)
           printf '%s\n' "${entries[@]:0:5}"
-          printf '%s\n' "${entries[@]}" | grep -q '^xboxsdk/toc\.json$'
-          printf '%s\n' "${entries[@]}" | grep -q '^xboxsdk/xbox_pk_welcome\.htm$'
+          found_toc=false
+          found_welcome=false
+          for entry in "${entries[@]}"; do
+            case "$entry" in
+              xboxsdk/toc.json) found_toc=true ;;
+              xboxsdk/xbox_pk_welcome.htm) found_welcome=true ;;
+            esac
+          done
+          [[ "$found_toc" == true ]]
+          [[ "$found_welcome" == true ]]
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
