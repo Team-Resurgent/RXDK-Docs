@@ -102,6 +102,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
       - name: Download archive artifact
         uses: actions/download-artifact@v5
         with:
@@ -127,12 +130,15 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
           test -f dist/xboxsdk.tar.gz
           args=(
             release create "${{ steps.meta.outputs.tag }}"
+            --repo "${GITHUB_REPOSITORY}"
+            --target "${GITHUB_SHA}"
             --title "RXDK Xbox SDK docs ${{ steps.meta.outputs.tag }}"
             --notes "Bundled Xbox SDK HTML reference (\`xboxsdk/\` inside the archive). Consumed by [RXDK-VSCode](https://github.com/Team-Resurgent/RXDK-VSCode) at extension activate."
           )
