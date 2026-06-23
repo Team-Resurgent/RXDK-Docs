@@ -1,0 +1,144 @@
+name: Build xboxsdk archive
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Attach xboxsdk.tar.gz to a GitHub Release (pre-release if not on a v* tag)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bundle:
+    name: Bundle xboxsdk.tar.gz
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f xboxsdk/toc.json
+          test -f xboxsdk/xbox_pk_welcome.htm
+          count="$(find xboxsdk -type f | wc -l | tr -d ' ')"
+          echo "xboxsdk source files: ${count}"
+
+      - name: Create xboxsdk.tar.gz
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f xboxsdk.tar.gz
+          tar -czf xboxsdk.tar.gz xboxsdk
+          ls -lh xboxsdk.tar.gz
+
+      - name: Verify archive layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -tzf xboxsdk.tar.gz | head -5
+          tar -tzf xboxsdk.tar.gz | grep -q '^xboxsdk/toc\.json$'
+          tar -tzf xboxsdk.tar.gz | grep -q '^xboxsdk/xbox_pk_welcome\.htm$'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: xboxsdk-archive
+          path: xboxsdk.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Write job summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          size_mb="$(awk '{printf "%.2f", $1/1024/1024}' xboxsdk.tar.gz)"
+          file_count="$(find xboxsdk -type f | wc -l | tr -d ' ')"
+          {
+            echo "### xboxsdk archive"
+            echo ""
+            echo "| Item | Value |"
+            echo "|------|-------|"
+            echo "| Archive | \`xboxsdk.tar.gz\` |"
+            echo "| Size | ${size_mb} MB |"
+            echo "| Source files | ${file_count} |"
+            echo ""
+            echo "Tar root contains \`xboxsdk/\` (same layout as [RXDK-VSCode](https://github.com/Team-Resurgent/RXDK-VSCode) \`docs/xboxsdk.tar.gz\`)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Publish GitHub Release
+    needs: bundle
+    if: |
+      github.event_name != 'pull_request' && (
+        startsWith(github.ref, 'refs/tags/v') ||
+        github.ref == 'refs/heads/master' ||
+        github.ref == 'refs/heads/main' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_release == 'true')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download archive artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: xboxsdk-archive
+          path: dist
+
+      - name: Resolve release tag
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+            prerelease=false
+          else
+            tag="docs-${GITHUB_RUN_NUMBER}"
+            prerelease=true
+          fi
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+          echo "Release tag: ${tag} (prerelease=${prerelease})"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/xboxsdk.tar.gz
+          args=(
+            release create "${{ steps.meta.outputs.tag }}"
+            --title "RXDK Xbox SDK docs ${{ steps.meta.outputs.tag }}"
+            --notes "Bundled Xbox SDK HTML reference (\`xboxsdk/\` inside the archive). Consumed by [RXDK-VSCode](https://github.com/Team-Resurgent/RXDK-VSCode) at extension activate."
+          )
+          if [[ "${{ steps.meta.outputs.prerelease }}" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+          gh "${args[@]}" dist/xboxsdk.tar.gz
+
+      - name: Write release summary
+        shell: bash
+        run: |
+          {
+            echo "### GitHub Release"
+            echo ""
+            echo "- Tag: \`${{ steps.meta.outputs.tag }}\`"
+            echo "- Pre-release: \`${{ steps.meta.outputs.prerelease }}\`"
+            echo "- Artifact: \`xboxsdk.tar.gz\`"
+          } >> "$GITHUB_STEP_SUMMARY"
