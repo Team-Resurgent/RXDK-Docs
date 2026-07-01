@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Settings</title></head>
+<body>
+<h1>Settings</h1>
+<p>
+  RXDK settings live under the <code>rxdk.*</code> and <code>xbox.*</code> namespaces in VS Code
+  settings. The most common ones are also grouped in the <a href="#screen">RXDK Settings screen</a>.
+</p>
+
+<h2 id="screen">RXDK Settings screen</h2>
+<p>
+  A curated panel that groups the settings you reach for most, with a batched <strong>Apply</strong> /
+  <strong>Cancel</strong> (unlike native settings, which apply instantly). Open it from:
+</p>
+<ul>
+  <li>The <strong>Settings</strong> (gear) row in the RXDK sidebar, or the gear in the sidebar title bar.</li>
+  <li><strong>RXDK: Settings</strong> in the Command Palette.</li>
+</ul>
+<p>Sections:</p>
+<table>
+  <tr><th>Section</th><th>Fields</th></tr>
+  <tr><td>Debugging</td><td>Globals visibility, Reveal title output</td></tr>
+  <tr><td>Device</td><td>Default Xbox IP / hostname</td></tr>
+  <tr><td>Projects</td><td>Default parent folder for new projects</td></tr>
+</table>
+<p>Changes save to your <strong>User (global)</strong> settings on Apply. Changing Globals visibility here refreshes a running debug session live.</p>
+
+<h2>Debugging</h2>
+<table>
+  <tr><th>Setting</th><th>Default</th><th>Meaning</th></tr>
+  <tr><td><code>rxdk.debugger.globalsScope</code></td><td><code>title</code></td><td>Which symbols appear in the Globals pane: <code>title</code> / <code>titleAndConstants</code> / <code>all</code>. See <a href="debugging.htm#globals">Debugging &rarr; Globals</a>.</td></tr>
+  <tr><td><code>xbox.showTitleOutput</code></td><td><code>true</code></td><td>Reveal the Output panel when the title prints via <code>OutputDebugStringA</code>.</td></tr>
+</table>
+
+<h2>Device</h2>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td><code>rxdk.defaultConsole</code></td><td>Default Xbox IP / hostname. Windows: empty = use the Xbox SDK registry. macOS/Linux: set it here.</td></tr>
+  <tr><td><code>xbox.defaultConsole</code></td><td>Alias for <code>rxdk.defaultConsole</code>.</td></tr>
+</table>
+
+<h2>Paths &amp; toolchain</h2>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td><code>rxdk.stagedSdkPath</code></td><td>Override the persistent SDK clone (<code>include</code>/<code>lib</code>). Empty = default under the RXDK data dir.</td></tr>
+  <tr><td><code>rxdk.stagedToolsPath</code></td><td>Override the host-tools directory.</td></tr>
+  <tr><td><code>rxdk.zigPath</code></td><td>Zig executable. Empty = PATH or the RXDK-managed Zig.</td></tr>
+  <tr><td><code>xbox.bridgePath</code></td><td><code>xboxdbg-bridge</code> executable. Empty = default host-tools download.</td></tr>
+  <tr><td><code>rxdk.xbwatsonPath</code></td><td>xbwatson path. Empty = default host-tools download.</td></tr>
+  <tr><td><code>rxdk.sdkPath</code></td><td>Override the bundled SDK path (advanced).</td></tr>
+</table>
+
+<h2>Sources &amp; versions</h2>
+<table>
+  <tr><th>Setting</th><th>Default</th><th>Meaning</th></tr>
+  <tr><td><code>rxdk.sdkGitUrl</code></td><td>RXDK-SDK repo</td><td>Git URL cloned for the SDK on first launch.</td></tr>
+  <tr><td><code>rxdk.sdkGitRef</code></td><td>—</td><td>Optional branch/tag for the SDK clone.</td></tr>
+  <tr><td><code>rxdk.docsGitUrl</code></td><td>RXDK-Docs repo</td><td>Git URL cloned for the documentation set (Xbox SDK reference + this guide) into the data root's <code>docs/</code>.</td></tr>
+  <tr><td><code>rxdk.docsGitRef</code></td><td>—</td><td>Optional branch/tag for the docs clone.</td></tr>
+  <tr><td><code>rxdk.hostToolsTag</code></td><td>latest</td><td>Pin the RXDK-Tools release (e.g. <code>build-78</code>).</td></tr>
+  <tr><td><code>rxdk.xdvdfsTag</code></td><td>latest</td><td>Pin the xdvdfs release (e.g. <code>v0.8.3-TR</code>).</td></tr>
+</table>
+<p>See also: <a href="commands.htm">Commands</a> · <a href="debugging.htm">Debugging</a>.</p>
+</body>
+</html>

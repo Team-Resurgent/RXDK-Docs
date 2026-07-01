@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>rxdk.project.json Reference</title></head>
+<body>
+<h1><code>rxdk.project.json</code> — Project Manifest Reference</h1>
+<p>
+  Every RXDK project has an <code>rxdk.project.json</code> file at its root. The extension locates a
+  project by searching the workspace for this file; it drives the build (which sources/libraries to
+  compile), the PE&rarr;XBE image step (<code>imagebld</code> switches), and deploy (what to copy to
+  the console).
+</p>
+<p>There are two kinds of project:</p>
+<ul>
+  <li><strong>Source project</strong> — RXDK compiles your <code>sources</code> and links <code>libraries</code> into an <code>.xbe</code>.</li>
+  <li><strong>Prebuilt-XBE project</strong> — you point at an existing <code>.xbe</code> (+ optional <code>.pdb</code>/<code>.map</code>); RXDK skips the build and only deploys + debugs. Set the <a href="#prebuilt"><code>prebuilt</code></a> object for this mode (see <a href="prebuilt-xbe.htm">Prebuilt-XBE projects</a>).</li>
+</ul>
+
+<h2>Minimal example</h2>
+<pre><code>{
+  "name": "my-triangle",
+  "sources": ["src/main.cpp"],
+  "libraries": ["libd3d8", "libd3dx8", "libxapi", "libc", "libcpp", "libkernel"],
+  "outputDir": "out",
+  "imageBuild": {
+    "stackSize": 65536,
+    "debug": true,
+    "noLogo": true,
+    "noLibWarn": true
+  }
+}</code></pre>
+
+<h2>Full example (media + embedded file + extra include/defines)</h2>
+<pre><code>{
+  "name": "my-tone",
+  "sources": ["src/main.cpp", "src/audio.cpp"],
+  "libraries": ["libdsound", "libxapi", "libc", "libcpp", "libkernel"],
+  "includePaths": ["include"],
+  "defines": ["MY_FEATURE=1", "AUDIO_DEBUG"],
+  "outputDir": "out",
+  "deployPaths": ["media"],
+  "embed": [{ "path": "media/dsstdfx.bin", "name": "dsstdfx" }],
+  "imageBuild": {
+    "stackSize": 65536,
+    "debug": true,
+    "noLogo": true,
+    "noLibWarn": true,
+    "limitMemory": false,
+    "noPreload": [".data"]
+  }
+}</code></pre>
+
+<h2>Top-level properties</h2>
+
+<h3><code>name</code></h3>
+<p><strong>Type:</strong> <code>string</code> · <strong>Required</strong></p>
+<p>
+  The project/title name. Used as the output <code>.xbe</code>/<code>.exe</code> base name and as the
+  remote folder under <code>xe:\</code> on the console (<code>xe:\&lt;name&gt;\</code>). Use a
+  filesystem-safe name (letters, digits, <code>_</code>, <code>-</code>; start with a letter).
+</p>
+
+<h3><code>sources</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Source projects only</p>
+<p>
+  Project-relative paths to the <code>.c</code> / <code>.cpp</code> files to compile. Globs are
+  <strong>not</strong> expanded — list each file. A source ending in <code>.cpp</code>/<code>.cxx</code>/<code>.cc</code>
+  marks the project as C++ (pulls in the C++ toolchain and IntelliSense configuration).
+  Example: <code>["src/main.cpp", "src/render/mesh.cpp"]</code>
+</p>
+
+<h3><code>libraries</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Source projects only</p>
+<p>
+  RXDK-SDK libraries to link, <strong>without</strong> the <code>.lib</code> extension. Order can
+  matter for static linking; keep the low-level libs (<code>libc</code>, <code>libcpp</code>,
+  <code>libkernel</code>) last. Common libraries:
+</p>
+<table>
+  <tr><th>Library</th><th>Provides</th></tr>
+  <tr><td><code>libd3d8</code></td><td>Direct3D 8 (graphics)</td></tr>
+  <tr><td><code>libd3dx8</code></td><td>D3DX 8 math/texture helpers</td></tr>
+  <tr><td><code>libdsound</code></td><td>DirectSound (audio)</td></tr>
+  <tr><td><code>libxapi</code></td><td>Xbox API (threads, files, input plumbing, launch)</td></tr>
+  <tr><td><code>libxmv</code></td><td>XMV video playback</td></tr>
+  <tr><td><code>libc</code></td><td>C runtime (picolibc)</td></tr>
+  <tr><td><code>libcpp</code></td><td>C++ runtime</td></tr>
+  <tr><td><code>libkernel</code></td><td><code>xboxkrnl</code> import stubs (always required)</td></tr>
+</table>
+
+<h3><code>includePaths</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional</p>
+<p>
+  Extra project-relative include directories, passed to the compiler as <code>/I</code>
+  <strong>after</strong> the SDK's <code>include</code>. Use for your own headers.
+  Example: <code>["include", "third_party/include"]</code>
+</p>
+
+<h3><code>defines</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional</p>
+<p>
+  Extra preprocessor defines (<code>/D</code>), appended <strong>after</strong> the RXDK defaults. Use
+  <code>NAME</code> or <code>NAME=value</code>. Example: <code>["NDEBUG", "TITLE_ID=0x1234"]</code>
+</p>
+
+<h3><code>outputDir</code></h3>
+<p><strong>Type:</strong> <code>string</code> · Optional (default: <code>out</code>)</p>
+<p>Project-relative directory for build artifacts (<code>.exe</code>, <code>.xbe</code>, <code>.pdb</code>, <code>.map</code>, intermediate objects).</p>
+
+<h3><code>deployPaths</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional</p>
+<p>
+  Project-relative directories copied <strong>recursively</strong> to the console on deploy, preserving
+  structure, under <code>xe:\&lt;name&gt;\</code>. Use for runtime assets your title loads (textures,
+  sounds, video). Example: <code>["media", "data/levels"]</code> &rarr; <code>xe:\my-title\media\…</code>.
+</p>
+<blockquote>
+  <strong>deployPaths vs embed:</strong> <code>deployPaths</code> copies loose files to the console
+  filesystem (read at runtime from disc/HDD). To bake a file <em>into the XBE image</em> instead, use
+  <a href="#embed"><code>embed</code></a>.
+</blockquote>
+
+<h3 id="embed"><code>embed</code></h3>
+<p><strong>Type:</strong> <code>RxdkEmbedFile[]</code> · Optional</p>
+<p>
+  Files embedded <strong>inside the XBE</strong> at build time via <code>imagebld /insertfile</code>.
+  Retrieve them at runtime by the given resource <code>name</code>. Typical use: the DirectSound
+  standard-effects blob (<code>dsstdfx.bin</code>). Each entry:
+</p>
+<ul>
+  <li><code>path</code> — <strong>string, required.</strong> Project-relative path to the file to embed.</li>
+  <li><code>name</code> — <strong>string, required.</strong> Resource name the title uses to locate the embedded data.</li>
+</ul>
+<p>Example: <code>[{ "path": "media/dsstdfx.bin", "name": "dsstdfx" }]</code></p>
+
+<h3><code>imageBuild</code></h3>
+<p><strong>Type:</strong> <code>RxdkImageBuildOptions</code> · Optional</p>
+<p>Switches for the PE&rarr;XBE step (<code>imagebld</code>). Omitted keys use <code>imagebld</code> defaults — see <a href="#imagebuild">Image build options</a>.</p>
+
+<h3 id="prebuilt"><code>prebuilt</code></h3>
+<p><strong>Type:</strong> <code>RxdkPrebuiltConfig</code> · Optional — presence switches the project to <strong>prebuilt-XBE</strong> mode</p>
+<p>
+  When set (with a valid <code>xbe</code>), RXDK does <strong>not</strong> compile.
+  <code>sources</code>/<code>libraries</code>/<code>imageBuild</code> are ignored. See
+  <a href="prebuilt-xbe.htm">Prebuilt-XBE projects</a> and <a href="#prebuilt-fields">prebuilt fields</a>.
+</p>
+
+<h2 id="imagebuild">Image build (<code>imageBuild</code>) options</h2>
+<p>All keys are optional; omit a key to use the <code>imagebld</code> default.</p>
+<table>
+  <tr><th>Key</th><th>Type</th><th><code>imagebld</code> switch</th><th>Meaning</th></tr>
+  <tr><td><code>stackSize</code></td><td>number</td><td><code>/stack:&lt;bytes&gt;</code></td><td>Title stack size in bytes (e.g. <code>65536</code>).</td></tr>
+  <tr><td><code>debug</code></td><td>boolean</td><td><code>/debug</code></td><td>Produce a debug XBE (needed for source-level debugging).</td></tr>
+  <tr><td><code>noLogo</code></td><td>boolean</td><td><code>/nologo</code></td><td>Suppress the <code>imagebld</code> banner.</td></tr>
+  <tr><td><code>noLibWarn</code></td><td>boolean</td><td><code>/nolibwarn</code></td><td>Suppress library-mismatch warnings.</td></tr>
+  <tr><td><code>limitMemory</code></td><td>boolean</td><td><code>/limitmem</code></td><td>Run with 64&nbsp;MB (retail) instead of 128&nbsp;MB (devkit). Use to catch retail-memory bugs.</td></tr>
+  <tr><td><code>dontModifyHardDisk</code></td><td>boolean</td><td><code>/dontmodifyharddisk</code></td><td>Don't let the image alter the HDD.</td></tr>
+  <tr><td><code>dontMountUtilityDrive</code></td><td>boolean</td><td><code>/dontmountutilitydrive</code></td><td>Don't mount the utility (<code>Z:</code>) drive.</td></tr>
+  <tr><td><code>formatUtilityDrive</code></td><td>boolean</td><td><code>/formatutilitydrive</code></td><td>Format the utility drive on launch.</td></tr>
+  <tr><td><code>utilityDriveClusterSize</code></td><td>number</td><td>—</td><td>Cluster size: <code>16384</code>, <code>32768</code>, or <code>65536</code>. Omit/<code>0</code> = default.</td></tr>
+  <tr><td><code>noPreload</code></td><td>string[]</td><td><code>/nopreload:&lt;section&gt;</code></td><td>Sections not preloaded at launch (one switch per name), e.g. <code>[".data"]</code>.</td></tr>
+</table>
+<blockquote><strong>Recommended for debugging:</strong> keep <code>"debug": true</code>. Without it there are no symbols to set breakpoints or inspect variables against.</blockquote>
+
+<h2 id="prebuilt-fields"><code>prebuilt</code> fields</h2>
+<p>Used only in prebuilt-XBE projects (see <a href="prebuilt-xbe.htm">Prebuilt-XBE projects</a>).</p>
+<table>
+  <tr><th>Key</th><th>Type</th><th>Required</th><th>Meaning</th></tr>
+  <tr><td><code>xbe</code></td><td>string</td><td>Yes</td><td>Absolute path to the existing <code>.xbe</code>.</td></tr>
+  <tr><td><code>pdb</code></td><td>string</td><td>—</td><td>Absolute path to the <code>.pdb</code> (symbols — needed for source-level debugging, Locals, Globals).</td></tr>
+  <tr><td><code>map</code></td><td>string</td><td>—</td><td>Absolute path to the linker <code>.map</code> (fallback source of globals when no PDB is used).</td></tr>
+  <tr><td><code>exe</code></td><td>string</td><td>—</td><td>Absolute path to the host PE <code>.exe</code>; used for image size. Falls back to the XBE header.</td></tr>
+  <tr><td><code>srcRoot</code></td><td>string</td><td>—</td><td>Source root to resolve file paths for PDBs built on another machine.</td></tr>
+  <tr><td><code>remoteName</code></td><td>string</td><td>Yes</td><td>Folder name under <code>xe:\</code> used for deploy/launch (<code>xe:\&lt;remoteName&gt;\</code>).</td></tr>
+</table>
+
+<h2>Notes &amp; gotchas</h2>
+<ul>
+  <li><strong>One manifest per project.</strong> The extension uses the first <code>rxdk.project.json</code> it finds. Keep one project per workspace folder.</li>
+  <li><strong><code>sources</code> are not globbed.</strong> Add new files to the array explicitly.</li>
+  <li><strong>Strict JSON.</strong> No <code>//</code> comments or trailing commas.</li>
+  <li><strong>After editing the manifest,</strong> re-run <strong>RXDK: Build</strong> (and <strong>Deploy</strong>) so new sources/assets take effect.</li>
+</ul>
+<p>See also: <a href="getting-started.htm">Getting started</a> · <a href="debugging.htm">Debugging</a> · <a href="settings.htm">Settings</a>.</p>
+</body>
+</html>

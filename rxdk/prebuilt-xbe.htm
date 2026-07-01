@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Prebuilt-XBE Projects</title></head>
+<body>
+<h1>Prebuilt-XBE Projects</h1>
+<p>
+  A prebuilt-XBE project points RXDK at an <strong>existing</strong> <code>.xbe</code> (and optional
+  symbols) instead of compiling from source. RXDK skips the build entirely and only
+  <strong>deploys</strong> and <strong>debugs</strong>. Use this to debug a title built elsewhere, a
+  legacy XBE, or a binary you don't have full sources for.
+</p>
+
+<h2>Create one</h2>
+<p>
+  Run <strong>RXDK: New Prebuilt XBE Project</strong>. Point it at the <code>.xbe</code> (and a
+  <code>.pdb</code>/<code>.map</code> if you have them). It generates an
+  <a href="project-manifest.htm"><code>rxdk.project.json</code></a> with a <code>prebuilt</code> block
+  and a workspace with a debug launch config.
+</p>
+
+<h2>Manifest shape</h2>
+<pre><code>{
+  "name": "my-legacy-title",
+  "prebuilt": {
+    "xbe": "C:\\builds\\game\\default.xbe",
+    "pdb": "C:\\builds\\game\\default.pdb",
+    "map": "C:\\builds\\game\\default.map",
+    "srcRoot": "C:\\builds\\game\\src",
+    "remoteName": "my-legacy-title"
+  }
+}</code></pre>
+<p>
+  See the <a href="project-manifest.htm#prebuilt-fields"><code>prebuilt</code> field reference</a> for
+  every key. Only <code>xbe</code> and <code>remoteName</code> are required.
+</p>
+
+<h2>What works</h2>
+<table>
+  <tr><th>Action</th><th>Prebuilt project</th></tr>
+  <tr><td><strong>Build</strong></td><td>No-op (nothing to compile).</td></tr>
+  <tr><td><strong>Deploy</strong></td><td>Copies the <code>.xbe</code> to <code>xe:\&lt;remoteName&gt;\</code>.</td></tr>
+  <tr><td><strong>Run / Debug</strong></td><td>Launches on the console; debugging attaches if a <code>.pdb</code> is provided.</td></tr>
+</table>
+
+<h2>Symbols &amp; source</h2>
+<ul>
+  <li><strong><code>pdb</code></strong> enables source-level debugging: breakpoints, Locals, and Globals. Without it you can still launch, but there's nothing to inspect.</li>
+  <li><strong><code>map</code></strong> is a fallback source of globals when no PDB is available (less detail than a PDB).</li>
+  <li><strong><code>srcRoot</code></strong> helps map a PDB built on another machine back to your local source tree, so breakpoints bind to the right files.</li>
+  <li><strong><code>exe</code></strong> (the host PE) is used only to determine image size; RXDK falls back to the XBE header if it's absent.</li>
+</ul>
+
+<h2>Refresh source folder</h2>
+<p>
+  <strong>RXDK: Refresh Source Folder</strong> re-syncs the workspace's view of the source tree for a
+  prebuilt project (useful after moving or updating the referenced sources).
+</p>
+<p>See also: <a href="debugging.htm">Debugging</a> · <a href="project-manifest.htm">Project manifest</a>.</p>
+</body>
+</html>

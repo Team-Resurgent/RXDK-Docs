@@ -1,0 +1,13 @@
+{
+  "title": "RXDK Extension",
+  "defaultPage": "index.htm",
+  "toc": [
+    { "name": "Overview", "page": "index.htm", "children": [] },
+    { "name": "Getting Started", "page": "getting-started.htm", "children": [] },
+    { "name": "Project Manifest (rxdk.project.json)", "page": "project-manifest.htm", "children": [] },
+    { "name": "Debugging", "page": "debugging.htm", "children": [] },
+    { "name": "Prebuilt-XBE Projects", "page": "prebuilt-xbe.htm", "children": [] },
+    { "name": "Settings", "page": "settings.htm", "children": [] },
+    { "name": "Commands", "page": "commands.htm", "children": [] }
+  ]
+}

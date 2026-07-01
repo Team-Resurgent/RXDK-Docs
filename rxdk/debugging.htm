@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Debugging</title></head>
+<body>
+<h1>Debugging</h1>
+<p>
+  RXDK debugging runs the title on the console and connects a symbol bridge (<code>xboxdbg-bridge</code>)
+  that reads the console's memory and resolves symbols from your <code>.pdb</code>. Start a session with
+  <strong>F5</strong> (or <strong>RXDK: Debug</strong>); it builds, deploys, launches under the debugger,
+  and attaches.
+</p>
+<p>Requirements:</p>
+<ul>
+  <li>The XBE must be built with <a href="project-manifest.htm#imagebuild"><code>imageBuild.debug: true</code></a>.</li>
+  <li>A <code>.pdb</code> must sit next to the <code>.xbe</code> in <code>outputDir</code>. (For prebuilt projects, set <a href="prebuilt-xbe.htm"><code>prebuilt.pdb</code></a>.)</li>
+</ul>
+
+<h2>Breakpoints</h2>
+<p>
+  Set line breakpoints as usual. On bind they turn solid; a hollow dot means the line couldn't be
+  mapped (often the file wasn't compiled with debug info, or the line has no code). When a breakpoint
+  hits, execution stops and the call stack, Locals, and Globals populate for that thread.
+</p>
+
+<h2>Locals</h2>
+<p>
+  The <strong>Locals</strong> scope shows the current frame's variables, resolved from the PDB with
+  correct types/sizes. RXDK uses a pure-managed PDB reader (not dbghelp) so modern Zig/LLVM local
+  records parse correctly — scalars show a value, aggregates (structs/arrays) are expandable.
+</p>
+
+<h2>Registers</h2>
+<p>The <strong>Registers</strong> scope shows the CPU registers for the stopped thread (<code>EAX</code>, <code>EBX</code>, …, <code>EIP</code>, <code>EFLAGS</code>).</p>
+
+<h2 id="globals">Globals</h2>
+<p>
+  The <strong>Globals</strong> scope shows your title's global variables, formatted at their absolute
+  address and expandable like Locals. Because a title statically links the whole XDK (Direct3D, XAPI,
+  the CRT), there are <em>hundreds</em> of library globals plus compile-time constant tables pulled in
+  from headers. To keep the pane useful, RXDK ranks globals and shows the most relevant set by default.
+</p>
+
+<h3>Visibility levels</h3>
+<table>
+  <tr><th>Level</th><th>Shows</th><th>Example</th></tr>
+  <tr><td><strong>Title</strong> (default)</td><td>Your title's own mutable globals (writable <code>.data</code>).</td><td><code>g_pd3dDevice</code>, <code>g_pVB</code>, timing vars</td></tr>
+  <tr><td><strong>Title + constants</strong></td><td>Also the title's compile-time constant tables (read-only <code>.rdata</code>).</td><td><code>D3DTEXTUREDIRECTENCODE</code> and other header lookup tables</td></tr>
+  <tr><td><strong>All</strong></td><td>Also statically-linked library globals.</td><td><code>D3D::*</code>, CRT internals — verbose</td></tr>
+</table>
+<p>
+  How the split works: RXDK maps each global to its owning module (via the PDB's section
+  contributions). Globals from a static library (object file ends in <code>.lib</code>) are library
+  globals; globals from your compiland are the title's. Of those, ones in a <strong>writable</strong>
+  section (<code>.data</code>/<code>.bss</code>) are your real mutable state, while ones in a
+  <strong>read-only</strong> section (<code>.rdata</code>) are constants. The default shows only the
+  writable, title-owned set. If a level would be empty, RXDK automatically relaxes to the next one so
+  the pane is never blank.
+</p>
+<blockquote>
+  File-static / anonymous-namespace globals appear without their
+  <code>`anonymous namespace'::</code> qualifier for readability (the raw name is still used
+  internally for expansion).
+</blockquote>
+
+<h3>Changing the level</h3>
+<ul>
+  <li><strong>Command:</strong> <strong>RXDK: Cycle Globals Visibility</strong> (Command Palette during a debug session) advances Title &rarr; Title + constants &rarr; All &rarr; Title.</li>
+  <li><strong>Setting:</strong> <code>rxdk.debugger.globalsScope</code> (<code>title</code> / <code>titleAndConstants</code> / <code>all</code>).</li>
+  <li><strong><a href="settings.htm">RXDK Settings screen</a>:</strong> the <strong>Debugging &rarr; Globals visibility</strong> dropdown.</li>
+</ul>
+<p>Changing the level <strong>refreshes the Globals pane live</strong> — no need to relaunch or step.</p>
+
+<h2>Watch &amp; Evaluate</h2>
+<p>
+  Add expressions to the <strong>Watch</strong> pane or evaluate them in the Debug Console. Expressions
+  resolve against the current frame's symbols and read live console memory. To expand a struct's
+  members, expand it in Locals/Globals (member-by-member expansion is supported one level deep).
+</p>
+
+<h2>Title output</h2>
+<p>
+  Text the title prints via <code>printf</code> / <code>OutputDebugStringA</code> appears in the
+  <strong>Xbox Title</strong> output channel. It reveals automatically when
+  <code>xbox.showTitleOutput</code> is enabled. For a standalone, always-on debug-string monitor, use
+  <strong>RXDK: Launch xbWatson</strong>.
+</p>
+
+<h2>Tips</h2>
+<ul>
+  <li>Rebuild <strong>and</strong> redeploy after code changes so the on-console image matches your symbols.</li>
+  <li>If Locals/Globals are empty, verify the <code>.pdb</code> is present next to the <code>.xbe</code>.</li>
+  <li>Start with <strong>Title</strong> globals; switch to <strong>All</strong> only when you need to inspect an XDK/CRT internal.</li>
+</ul>
+<p>See also: <a href="getting-started.htm">Getting started</a> · <a href="settings.htm">Settings</a> · <a href="prebuilt-xbe.htm">Prebuilt-XBE projects</a>.</p>
+</body>
+</html>

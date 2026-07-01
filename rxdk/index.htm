@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK Extension — Overview</title></head>
+<body>
+<h1>RXDK Extension Documentation</h1>
+<p>
+  Documentation for the <strong>RXDK</strong> VS Code extension — creating, building, deploying,
+  running, and debugging original Xbox titles from VS Code. For the Xbox SDK <em>API</em> reference
+  (Direct3D 8, XAPI, DirectSound, …) use <strong>RXDK: Xbox SDK Documentation</strong> instead; that
+  is a separate reference set in the same viewer.
+</p>
+
+<h2>Contents</h2>
+<ul>
+  <li><a href="getting-started.htm">Getting started</a> — prerequisites, create a project, build/deploy/run/debug.</li>
+  <li><a href="project-manifest.htm">Project manifest (<code>rxdk.project.json</code>)</a> — complete property reference.</li>
+  <li><a href="debugging.htm">Debugging</a> — breakpoints, Locals, the Globals pane + visibility toggle, Watch, registers.</li>
+  <li><a href="prebuilt-xbe.htm">Prebuilt-XBE projects</a> — debug an existing <code>.xbe</code> with no build step.</li>
+  <li><a href="settings.htm">Settings</a> — every RXDK setting and the RXDK Settings screen.</li>
+  <li><a href="commands.htm">Commands</a> — the RXDK command palette / sidebar commands.</li>
+</ul>
+
+<h2>Where things live</h2>
+<p>
+  RXDK keeps shared data outside your project, in a per-user <strong>data root</strong>, so multiple
+  projects reuse one copy. The data root is platform-specific:
+</p>
+<table>
+  <tr><th>OS</th><th>Data root</th></tr>
+  <tr><td>Windows</td><td><code>%ProgramData%\RXDK</code> (e.g. <code>C:\ProgramData\RXDK</code>)</td></tr>
+  <tr><td>macOS</td><td><code>~/Library/Application Support/RXDK</code></td></tr>
+  <tr><td>Linux</td><td><code>$XDG_DATA_HOME/rxdk</code> (default <code>~/.local/share/rxdk</code>)</td></tr>
+</table>
+<p>Inside the data root:</p>
+<table>
+  <tr><th>Subfolder</th><th>Contents</th></tr>
+  <tr><td><code>sdk/</code></td><td>RXDK-SDK <code>include</code> + <code>lib</code> (headers and import/static libs).</td></tr>
+  <tr><td><code>tools/</code></td><td>Host tools: <code>imagebld</code>, <code>xdvdfs</code>, <code>xbcp</code>, <code>xboxdbg-bridge</code>, <code>xbwatson</code>.</td></tr>
+  <tr><td><code>docs/</code></td><td>The <a href="https://github.com/Team-Resurgent/RXDK-Docs">RXDK-Docs</a> repo clone: <code>xboxsdk/</code> (API reference) and <code>rxdk/</code> (this documentation).</td></tr>
+</table>
+<p>
+  Override the SDK/tools locations with the <code>rxdk.stagedSdkPath</code> /
+  <code>rxdk.stagedToolsPath</code> settings. Documentation is delivered by cloning the RXDK-Docs
+  repository (like the SDK libraries); the repo's <code>VERSION</code> file tracks the installed docs
+  version.
+</p>
+</body>
+</html>

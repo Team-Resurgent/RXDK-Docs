@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Getting Started</title></head>
+<body>
+<h1>Getting Started</h1>
+<p>From a fresh install to a title running (and debugging) on a devkit.</p>
+
+<h2>1. Install prerequisites</h2>
+<p>
+  Open the <strong>RXDK</strong> sidebar (Activity Bar &rarr; RXDK icon). If setup is incomplete you'll
+  see <strong>Setup required &rarr; Complete RXDK setup…</strong> (command:
+  <strong>RXDK: Complete Setup</strong>). It installs:
+</p>
+<ul>
+  <li><strong>.NET 8 runtime</strong> — used by the host tools and the debug bridge.</li>
+  <li><strong>RXDK-SDK</strong> — <code>include</code> + <code>lib</code>, cloned to the data root's <code>sdk/</code>.</li>
+  <li><strong>Host tools</strong> — <code>imagebld</code>, <code>xdvdfs</code>, <code>xbcp</code>, <code>xboxdbg-bridge</code>, <code>xbwatson</code>, in <code>tools/</code>.</li>
+  <li><strong>Zig</strong> — the C/C++ compiler toolchain.</li>
+  <li><strong>Documentation</strong> — the RXDK-Docs repo (Xbox SDK API reference + this extension guide), cloned to <code>docs/</code>.</li>
+</ul>
+<p>
+  The data root is <code>%ProgramData%\RXDK</code> on Windows,
+  <code>~/Library/Application Support/RXDK</code> on macOS, and <code>~/.local/share/rxdk</code> on
+  Linux — see <a href="index.htm">Overview &rarr; Where things live</a>.
+</p>
+
+<h2>2. Point at your devkit</h2>
+<ul>
+  <li><strong>Command:</strong> <strong>RXDK: Set Xbox IP / Hostname</strong>, or the <strong>Devkit</strong> node in the sidebar.</li>
+  <li><strong>Windows:</strong> if left blank, RXDK reads the Xbox SDK registry (<code>XBSetIP</code> / Neighborhood).</li>
+  <li><strong>macOS/Linux:</strong> set <code>rxdk.defaultConsole</code> in settings (no registry). You can also set it in the <a href="settings.htm">RXDK Settings screen</a>.</li>
+</ul>
+<p>The devkit must be on and reachable on the network.</p>
+
+<h2>3. Create a project</h2>
+<p><strong>RXDK: New Project</strong> opens the wizard. Pick a template, name, and parent folder:</p>
+<table>
+  <tr><th>Template</th><th>Shows</th></tr>
+  <tr><td>D3D8 Triangle</td><td>Rotating Direct3D 8 triangle</td></tr>
+  <tr><td>DSound Tone</td><td>DirectSound audio</td></tr>
+  <tr><td>XInput Gamepad</td><td>Controller input</td></tr>
+  <tr><td>XMV Play</td><td>Video playback</td></tr>
+</table>
+<p>
+  The wizard scaffolds the project (including its <a href="project-manifest.htm"><code>rxdk.project.json</code></a>),
+  a VS Code workspace, and build/debug tasks, then opens it.
+</p>
+
+<h2>4. Build</h2>
+<p>
+  <strong>RXDK: Build</strong> compiles <code>sources</code>, links <code>libraries</code>, and runs
+  <code>imagebld</code> to produce the <code>.xbe</code> (under <code>outputDir</code>, default
+  <code>out/</code>). Output streams to a terminal + the <strong>RXDK</strong> output channel.
+</p>
+
+<h2>5. Deploy &amp; run</h2>
+<ul>
+  <li><strong>RXDK: Deploy</strong> copies the <code>.xbe</code> and any <a href="project-manifest.htm">deployPaths</a> to <code>xe:\&lt;name&gt;\</code>.</li>
+  <li><strong>RXDK: Run</strong> launches the deployed title.</li>
+</ul>
+<p>(Deploy and run require the .NET runtime and a reachable console.)</p>
+
+<h2>6. Debug</h2>
+<p>
+  Press <strong>F5</strong> (or <strong>RXDK: Debug</strong>). This builds, deploys, launches under the
+  debugger, and connects the symbol bridge. Set breakpoints and inspect state — see
+  <a href="debugging.htm">Debugging</a>.
+</p>
+
+<h2>Testing checklist</h2>
+<p>A quick loop for verifying a change on hardware:</p>
+<ol>
+  <li>Edit code &rarr; <strong>RXDK: Build</strong> (watch the terminal for compile/link errors).</li>
+  <li><strong>RXDK: Deploy</strong> (confirm files land under <code>xe:\&lt;name&gt;\</code>).</li>
+  <li><strong>F5</strong> to debug, or <strong>RXDK: Run</strong> to just launch.</li>
+  <li>Set a breakpoint in <code>main</code> &rarr; confirm it binds (solid dot) and hits.</li>
+  <li>Inspect <strong>Locals</strong> and <strong>Globals</strong> (see the <a href="debugging.htm">Globals visibility toggle</a>).</li>
+  <li>Watch title output in the <strong>Xbox Title</strong> output channel (toggle <code>xbox.showTitleOutput</code>), or launch <strong>xbWatson</strong>.</li>
+</ol>
+
+<h2>Troubleshooting</h2>
+<table>
+  <tr><th>Symptom</th><th>Try</th></tr>
+  <tr><td>"No <code>rxdk.project.json</code> found"</td><td>Open the project folder as the workspace root.</td></tr>
+  <tr><td>"RXDK SDK not installed"</td><td>Reload the window (triggers the clone), or run <strong>Complete Setup</strong>.</td></tr>
+  <tr><td>Deploy/run fails immediately</td><td>Check the devkit IP (<strong>Set Xbox IP</strong>), power, and network.</td></tr>
+  <tr><td>Breakpoints don't bind</td><td>Ensure <code>imageBuild.debug</code> is <code>true</code> and you rebuilt/redeployed.</td></tr>
+  <tr><td>No symbols / empty Locals</td><td>Confirm the <code>.pdb</code> sits next to the <code>.xbe</code> in <code>outputDir</code>.</td></tr>
+  <tr><td>".NET runtime missing"</td><td>Run <strong>RXDK: Install .NET 8 Runtime</strong>.</td></tr>
+</table>
+<p>See also: <a href="project-manifest.htm">Project manifest</a> · <a href="commands.htm">Commands</a>.</p>
+</body>
+</html>

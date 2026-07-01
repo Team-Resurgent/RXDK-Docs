@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Commands</title></head>
+<body>
+<h1>Commands</h1>
+<p>
+  RXDK commands are available in the Command Palette (all prefixed <strong>RXDK:</strong>) and, for most,
+  as rows in the <strong>RXDK</strong> sidebar. Some are gated until prerequisites are installed or a
+  debug session is active.
+</p>
+
+<h2>Setup &amp; project</h2>
+<table>
+  <tr><th>Command</th><th>Does</th></tr>
+  <tr><td>RXDK: Complete Setup</td><td>Install all prerequisites (.NET, SDK, docs, Zig, host tools).</td></tr>
+  <tr><td>RXDK: New Project</td><td>Scaffold a project from a template (wizard).</td></tr>
+  <tr><td>RXDK: New Prebuilt XBE Project</td><td>Create a <a href="prebuilt-xbe.htm">prebuilt-XBE</a> project from an existing <code>.xbe</code>.</td></tr>
+  <tr><td>RXDK: Refresh Source Folder</td><td>Re-sync a prebuilt project's source view.</td></tr>
+</table>
+
+<h2>Build / deploy / run</h2>
+<table>
+  <tr><th>Command</th><th>Does</th></tr>
+  <tr><td>RXDK: Build</td><td>Compile + link + <code>imagebld</code> &rarr; <code>.xbe</code>.</td></tr>
+  <tr><td>RXDK: Deploy</td><td>Copy the <code>.xbe</code> and <code>deployPaths</code> to <code>xe:\&lt;name&gt;\</code>.</td></tr>
+  <tr><td>RXDK: Run</td><td>Launch the deployed title.</td></tr>
+  <tr><td>RXDK: Debug (F5)</td><td>Build, deploy, launch under the debugger, attach symbols.</td></tr>
+</table>
+
+<h2>Device</h2>
+<table>
+  <tr><th>Command</th><th>Does</th></tr>
+  <tr><td>RXDK: Set Xbox IP / Hostname</td><td>Set the target console address.</td></tr>
+  <tr><td>RXDK: Launch xbWatson</td><td>Open the standalone debug-string monitor.</td></tr>
+</table>
+
+<h2>Debugging</h2>
+<table>
+  <tr><th>Command</th><th>Does</th></tr>
+  <tr><td>RXDK: Cycle Globals Visibility</td><td>Advance the Globals pane filter: Title &rarr; Title + constants &rarr; All. See <a href="debugging.htm#globals">Debugging</a>. (Available during a debug session.)</td></tr>
+</table>
+
+<h2>Docs, SDK &amp; settings</h2>
+<table>
+  <tr><th>Command</th><th>Does</th></tr>
+  <tr><td>RXDK: Extension Documentation</td><td>Open <em>this</em> documentation set.</td></tr>
+  <tr><td>RXDK: Xbox SDK Documentation</td><td>Open the Xbox SDK API reference.</td></tr>
+  <tr><td>RXDK: Open SDK Folder (include/lib)</td><td>Reveal the staged SDK folder.</td></tr>
+  <tr><td>RXDK: Fetch Latest RXDK-SDK</td><td>Clone/pull the latest SDK.</td></tr>
+  <tr><td>RXDK: Install .NET 8 Runtime</td><td>Download &amp; install the runtime.</td></tr>
+  <tr><td>RXDK: Settings</td><td>Open the <a href="settings.htm#screen">RXDK Settings screen</a>.</td></tr>
+</table>
+<p>See also: <a href="getting-started.htm">Getting started</a> · <a href="settings.htm">Settings</a>.</p>
+</body>
+</html>
