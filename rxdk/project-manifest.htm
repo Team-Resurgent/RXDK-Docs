@@ -34,6 +34,7 @@
   "name": "my-tone",
   "sources": ["src/main.cpp", "src/audio.cpp"],
   "libraries": ["libdsound", "libxapi", "libc", "libcpp", "libkernel"],
+  "configuration": "release",
   "includePaths": ["include"],
   "defines": ["MY_FEATURE=1", "AUDIO_DEBUG"],
   "outputDir": "out",
@@ -91,10 +92,27 @@
   <tr><td><code>libdsound</code></td><td>DirectSound (audio)</td></tr>
   <tr><td><code>libxapi</code></td><td>Xbox API (threads, files, input plumbing, launch)</td></tr>
   <tr><td><code>libxmv</code></td><td>XMV video playback</td></tr>
+  <tr><td><code>libxfont</code></td><td>Bitmap-font text rendering</td></tr>
+  <tr><td><code>libxnet</code></td><td>XNet TCP/IP networking + Berkeley sockets</td></tr>
   <tr><td><code>libc</code></td><td>C runtime (picolibc)</td></tr>
   <tr><td><code>libcpp</code></td><td>C++ runtime</td></tr>
   <tr><td><code>libkernel</code></td><td><code>xboxkrnl</code> import stubs (always required)</td></tr>
 </table>
+
+<h3 id="configuration"><code>configuration</code></h3>
+<p><strong>Type:</strong> <code>"debug" | "release"</code> · Optional (default: <code>release</code>) · Source projects only</p>
+<p>
+  Which prebuilt SDK library variant this project links. The SDK ships every library
+  (<code>libraries</code> above) in two flavors side by side: <code>release</code> is optimized for
+  size (<code>ReleaseSmall</code>, no debug info) and <code>debug</code> is unoptimized with full
+  symbols. Release is the default — it links smaller and doesn't pull the SDK's debug info into your
+  title; switch to <code>debug</code> when you want to step into SDK code.
+</p>
+<blockquote>
+  This selects the variant of the <em>prebuilt SDK libraries</em> only. How your <em>own</em> sources
+  are compiled is a separate, machine-level setting (<strong>RXDK: Set Build Type</strong> /
+  <code>rxdk.optimize</code>).
+</blockquote>
 
 <h3 id="projectReferences"><code>projectReferences</code></h3>
 <p><strong>Type:</strong> <code>string[]</code> · Optional · Executable or library projects</p>
