@@ -54,9 +54,18 @@
 <h3><code>name</code></h3>
 <p><strong>Type:</strong> <code>string</code> · <strong>Required</strong></p>
 <p>
-  The project/title name. Used as the output <code>.xbe</code>/<code>.exe</code> base name and as the
-  remote folder under <code>xe:\</code> on the console (<code>xe:\&lt;name&gt;\</code>). Use a
-  filesystem-safe name (letters, digits, <code>_</code>, <code>-</code>; start with a letter).
+  The project/title name. Used as the output <code>.xbe</code>/<code>.exe</code>/<code>.lib</code> base
+  name and as the remote folder under <code>xe:\</code> on the console (<code>xe:\&lt;name&gt;\</code>).
+  Use a filesystem-safe name (letters, digits, <code>_</code>, <code>-</code>; start with a letter).
+</p>
+
+<h3><code>type</code></h3>
+<p><strong>Type:</strong> <code>"executable"</code> | <code>"library"</code> · Optional (default <code>"executable"</code>)</p>
+<p>
+  <code>"executable"</code> builds an <code>.xbe</code>. <code>"library"</code> builds a static
+  <code>out/&lt;name&gt;.lib</code> that other projects link via
+  <a href="#projectReferences"><code>projectReferences</code></a>; a library is <strong>not</strong>
+  deployed or run. See <a href="#multiproject">Multi-project builds</a>.
 </p>
 
 <h3><code>sources</code></h3>
@@ -87,12 +96,34 @@
   <tr><td><code>libkernel</code></td><td><code>xboxkrnl</code> import stubs (always required)</td></tr>
 </table>
 
+<h3 id="projectReferences"><code>projectReferences</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional · Executable or library projects</p>
+<p>
+  Project-relative paths to <strong>library projects</strong> (folders whose
+  <code>rxdk.project.json</code> has <code>"type": "library"</code>) that this project links. Resolved
+  <strong>transitively</strong> (a library may reference other libraries), built in dependency order
+  to static <code>.lib</code>s, then linked into this project. Each referenced library's
+  <a href="#publicIncludePaths"><code>publicIncludePaths</code></a> are added to this project's compile
+  include path automatically, and its SDK <code>libraries</code> are merged into the final link.
+  Example: <code>["../libs/physics", "../libs/render"]</code>. See
+  <a href="#multiproject">Multi-project builds</a>.
+</p>
+
 <h3><code>includePaths</code></h3>
 <p><strong>Type:</strong> <code>string[]</code> · Optional</p>
 <p>
   Extra project-relative include directories, passed to the compiler as <code>/I</code>
-  <strong>after</strong> the SDK's <code>include</code>. Use for your own headers.
+  <strong>after</strong> the SDK's <code>include</code>. Private to this project's own compile.
   Example: <code>["include", "third_party/include"]</code>
+</p>
+
+<h3 id="publicIncludePaths"><code>publicIncludePaths</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional</p>
+<p>
+  Include directories a <strong>library</strong> project <em>exports</em> to projects that reference it
+  — they are added to the consumer's compile include path (transitively). Also visible to the
+  library's own sources. For an executable this behaves like an extra local include path.
+  Example (in a library): <code>["include"]</code>
 </p>
 
 <h3><code>defines</code></h3>
@@ -109,14 +140,22 @@
 <h3><code>deployPaths</code></h3>
 <p><strong>Type:</strong> <code>string[]</code> · Optional</p>
 <p>
-  Project-relative directories copied <strong>recursively</strong> to the console on deploy, preserving
-  structure, under <code>xe:\&lt;name&gt;\</code>. Use for runtime assets your title loads (textures,
-  sounds, video). Example: <code>["media", "data/levels"]</code> &rarr; <code>xe:\my-title\media\…</code>.
+  Project-relative files or directories copied next to your title's own output &mdash; to
+  <code>xe:\&lt;name&gt;\</code> on <strong>RXDK: Deploy</strong>, and staged into the <code>.iso</code>
+  alongside <code>default.xbe</code> on <strong>RXDK: Build</strong>. Use for runtime assets your title
+  loads (textures, sounds, video).
 </p>
+<ul>
+  <li>A <strong>directory</strong> entry is copied <strong>recursively</strong>, preserving its structure
+    under that same name. Example: <code>["media", "data/levels"]</code> &rarr;
+    <code>xe:\my-title\media\…</code>, <code>xe:\my-title\data\levels\…</code>.</li>
+  <li>A <strong>file</strong> entry is copied to that exact same relative path. Example:
+    <code>["readme.txt"]</code> &rarr; <code>xe:\my-title\readme.txt</code>.</li>
+</ul>
 <blockquote>
   <strong>deployPaths vs embed:</strong> <code>deployPaths</code> copies loose files to the console
-  filesystem (read at runtime from disc/HDD). To bake a file <em>into the XBE image</em> instead, use
-  <a href="#embed"><code>embed</code></a>.
+  filesystem / disc image (read at runtime from disc/HDD). To bake a file <em>into the XBE image</em>
+  instead, use <a href="#embed"><code>embed</code></a>.
 </blockquote>
 
 <h3 id="embed"><code>embed</code></h3>
@@ -172,6 +211,43 @@
   <tr><td><code>srcRoot</code></td><td>string</td><td>—</td><td>Source root to resolve file paths for PDBs built on another machine.</td></tr>
   <tr><td><code>remoteName</code></td><td>string</td><td>Yes</td><td>Folder name under <code>xe:\</code> used for deploy/launch (<code>xe:\&lt;remoteName&gt;\</code>).</td></tr>
 </table>
+
+<h2 id="multiproject">Multi-project builds (libraries)</h2>
+<p>
+  A larger title can be split into a main executable plus one or more static-library projects it
+  reuses. Each library is an ordinary project with <code>"type": "library"</code> that builds to
+  <code>out/&lt;name&gt;.lib</code>; the executable lists the libraries in
+  <a href="#projectReferences"><code>projectReferences</code></a>.
+</p>
+<p>When you build the executable, RXDK automatically:</p>
+<ul>
+  <li>resolves <code>projectReferences</code> <strong>transitively</strong> (libraries may reference libraries) and builds them in dependency order (cycles are reported);</li>
+  <li>adds every referenced library's <a href="#publicIncludePaths"><code>publicIncludePaths</code></a> to the compile include path;</li>
+  <li>links the built <code>.lib</code>s (in a link group, so inter-library references resolve regardless of order) and merges each library's SDK <code>libraries</code> into the final link (<code>libkernel</code> kept last).</li>
+</ul>
+
+<p><strong>Library</strong> — <code>libs/mathlib/rxdk.project.json</code>:</p>
+<pre><code>{
+  "name": "mathlib",
+  "type": "library",
+  "sources": ["src/mathlib.cpp"],
+  "publicIncludePaths": ["include"]
+}</code></pre>
+
+<p><strong>Executable</strong> — <code>game/rxdk.project.json</code>:</p>
+<pre><code>{
+  "name": "mygame",
+  "sources": ["src/main.cpp"],
+  "projectReferences": ["../libs/mathlib"],
+  "libraries": ["libd3d8", "libxapi", "libc", "libcpp", "libkernel"],
+  "imageBuild": { "debug": true, "stackSize": 65536 }
+}</code></pre>
+<p>
+  <code>src/main.cpp</code> can now <code>#include "mathlib.h"</code> (from the library's
+  <code>include/</code>) and call into it — the header resolves in the editor and at build time, and the
+  symbol is linked from <code>mathlib.lib</code>. Building the library folder directly produces just its
+  <code>.lib</code>; <strong>Deploy</strong>/<strong>Run</strong> on a library are no-ops.
+</p>
 
 <h2>Notes &amp; gotchas</h2>
 <ul>

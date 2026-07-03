@@ -21,8 +21,8 @@
 <h2>Build / deploy / run</h2>
 <table>
   <tr><th>Command</th><th>Does</th></tr>
-  <tr><td>RXDK: Build</td><td>Compile + link + <code>imagebld</code> &rarr; <code>.xbe</code>.</td></tr>
-  <tr><td>RXDK: Deploy</td><td>Copy the <code>.xbe</code> and <code>deployPaths</code> to <code>xe:\&lt;name&gt;\</code>.</td></tr>
+  <tr><td>RXDK: Build</td><td>Compile + link + <code>imagebld</code> &rarr; <code>.xbe</code>, then packs an <code>.iso</code> (staging any <a href="project-manifest.htm">deployPaths</a> alongside it).</td></tr>
+  <tr><td>RXDK: Deploy</td><td>Copy the <code>.xbe</code> and <a href="project-manifest.htm">deployPaths</a> to <code>xe:\&lt;name&gt;\</code>.</td></tr>
   <tr><td>RXDK: Run</td><td>Launch the deployed title.</td></tr>
   <tr><td>RXDK: Debug (F5)</td><td>Build, deploy, launch under the debugger, attach symbols.</td></tr>
 </table>
