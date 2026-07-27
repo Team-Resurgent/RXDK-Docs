@@ -10,12 +10,12 @@ docs version.
 | Path | Purpose |
 |------|---------|
 | `xboxsdk/` | Xbox SDK API reference — HTML topics + `toc.json` + welcome page |
-| `rxdk/` | RXDK extension documentation — HTML topics + `toc.json` |
+| `rxdk-vscode/` | RXDK extension documentation — HTML topics + `toc.json` |
 | `VERSION` | Docs version string (read by the extension, like the SDK's `VERSION`) |
 
 Each subset has its own `toc.json` (`{ title, defaultPage, toc: [{ name, page, children }] }`) and is
 opened by a separate command: **RXDK: Xbox SDK Documentation** (`xboxsdk/`) and **RXDK: Extension
-Documentation** (`rxdk/`).
+Documentation** (`rxdk-vscode/`).
 
 ## Delivery
 
