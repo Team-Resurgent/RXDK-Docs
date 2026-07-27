@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Overview</title></head>
+<body>
+<h1>RXDK for Visual Studio</h1>
+<p>
+  Documentation for the <strong>RXDK Visual Studio extension</strong> — creating, building,
+  deploying, running, and debugging original Xbox titles from <strong>Visual Studio 2022 / 2026</strong>.
+  For the Xbox SDK <em>API</em> reference (Direct3D 8, XAPI, DirectSound, …) use
+  <strong>Xbox SDK Documentation</strong> instead; that is a separate reference set.
+</p>
+<p>
+  (Using VS Code instead? See the <a href="../rxdk/index.htm">RXDK VS Code extension</a> docs.)
+</p>
+
+<h2>How it works</h2>
+<p>
+  RXDK projects are native Visual Studio C++ projects (<code>.vcxproj</code>) of the
+  <strong>Makefile</strong> configuration type. Visual Studio owns the IDE experience — Solution
+  Explorer, IntelliSense, the Build menu, the Error List, and F5 — while the actual compile is
+  delegated to the RXDK clean-room <strong>Zig</strong> toolchain against RXDK's own headers and
+  libraries (the retail compiler cannot link them, so it only powers the IDE). You never edit a
+  <code>rxdk.project.json</code>: the <code>.vcxproj</code> is the single source of truth, and the
+  build settings live on the RXDK property pages.
+</p>
+
+<h2>Contents</h2>
+<ul>
+  <li><a href="getting-started.htm">Getting started</a> — prerequisites, new project, build, deploy, F5-debug.</li>
+  <li><a href="templates.htm">Project templates</a> — the RXDK templates in <em>File &gt; New &gt; Project</em>.</li>
+  <li><a href="configurations.htm">Configurations</a> — Debug/Release, build flavor, optimization, output dirs.</li>
+  <li><a href="property-pages.htm">Property pages</a> — Xbox Build, Xbox Image, Certificate, Title Info, Xbox Deployment.</li>
+  <li><a href="libraries.htm">Library projects &amp; references</a> — multi-project builds and extra libraries.</li>
+  <li><a href="debugging.htm">Deploy &amp; debug</a> — F5, breakpoints, DXT extensions, the project menu.</li>
+  <li><a href="rxdk-window.htm">The RXDK window</a> — console, folders, docs, tools and setup.</li>
+</ul>
+
+<h2>Where things live</h2>
+<p>
+  RXDK keeps shared data outside your project, in a per-user data root, so multiple projects reuse
+  one copy. On Windows (VS is Windows-only) this is <code>%ProgramData%\RXDK</code>
+  (e.g. <code>C:\ProgramData\RXDK</code>):
+</p>
+<table>
+  <tr><th>Subfolder</th><th>Contents</th></tr>
+  <tr><td><code>sdk/</code></td><td>RXDK-SDK <code>include</code> + <code>lib</code> (headers and import/static libs).</td></tr>
+  <tr><td><code>tools/</code></td><td>Host tools: <code>imagebld</code>, <code>xdvdfs</code>, <code>xbcp</code>, <code>xbdel</code>, <code>xbneighborhood</code>, <code>xboxdbg-bridge</code>, <code>xbwatson</code>, <code>xbox-launch</code>.</td></tr>
+  <tr><td><code>engine/</code></td><td><code>Rxdk.Cli.exe</code> / <code>Rxdk.Dap.exe</code> — the build/deploy engine and the debug adapter the extension drives.</td></tr>
+  <tr><td><code>docs/</code></td><td>The <a href="https://github.com/Team-Resurgent/RXDK-Docs">RXDK-Docs</a> repo clone: <code>xboxsdk/</code> (API reference), <code>rxdk-vs/</code> (this documentation), and <code>rxdk/</code> (the VS Code docs).</td></tr>
+</table>
+<p>
+  These are populated by <strong>RXDK &gt; RXDK Window &gt; Install Prerequisites</strong>, which only
+  downloads what is missing.
+</p>
+</body>
+</html>

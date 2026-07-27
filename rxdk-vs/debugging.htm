@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Deploy &amp; Debug</title></head>
+<body>
+<h1>Deploy &amp; debug</h1>
+<p><a href="index.htm">&larr; Overview</a></p>
+
+<h2>F5</h2>
+<p>
+  Press <strong>F5</strong> — or the green <strong>Xbox Debugger (RXDK)</strong> run button. RXDK builds
+  the startup project, deploys the <code>.xbe</code> and its media to the console, launches the title, and
+  attaches a source-level debugger over <code>xbdm</code>. Set breakpoints in your source; when one is hit
+  Visual Studio stops with the source shown and the Call Stack, Locals, Watch and Registers windows live
+  from the console.
+</p>
+<p>
+  The green button reads <em>Xbox Debugger (RXDK)</em>, not "Local Windows Debugger" — that is expected.
+  Do not use a Local Windows Debugger; the <code>.xbe</code> is not a Windows executable.
+</p>
+
+<h2>Set the startup project</h2>
+<p>
+  F5 debugs the solution's <strong>startup project</strong> (bold in Solution Explorer). For a
+  multi-project solution, make the executable the startup project (right-click &gt; <strong>Set as Startup
+  Project</strong>) — not the library.
+</p>
+
+<h2>Re-deploying (retry) &amp; the project menu</h2>
+<p>
+  Right-click an RXDK project in Solution Explorer for per-project commands:
+</p>
+<ul>
+  <li><strong>Deploy to Xbox</strong> — build (incrementally) and (re)deploy the <code>.xbe</code> and media.
+      Use this to retry a deploy when the devkit was off during F5, without a full rebuild.</li>
+  <li><strong>Remove DXT &amp; Reboot</strong> — for DXT projects only; removes the extension from
+      <code>E:\dxt</code> and warm-reboots.</li>
+</ul>
+
+<h2>DXT (debug-monitor extension) projects</h2>
+<p>
+  A DXT is not a title — it is loaded by <code>xbdm</code> at boot from <code>E:\dxt</code>. F5 on a DXT
+  project builds, deploys to <code>E:\dxt</code> and warm-reboots the console; there is no attach-debug
+  session because the extension runs inside the debug monitor. Use <strong>Remove DXT &amp; Reboot</strong>
+  to unload it.
+</p>
+
+<h2>Optimized (Release) builds</h2>
+<p>
+  Debugging works in any configuration, but a Release-flavored build is optimized, so stepping and Locals
+  are less precise — as with any optimized native build. Use Debug for the most faithful debugging.
+</p>
+</body>
+</html>

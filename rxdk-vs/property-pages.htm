@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Property Pages</title></head>
+<body>
+<h1>Property pages</h1>
+<p><a href="index.htm">&larr; Overview</a></p>
+<p>
+  Right-click the project &gt; <strong>Properties</strong>. Under <strong>Configuration Properties</strong>
+  the RXDK pages appear together: <strong>Xbox Build</strong>, <strong>Xbox Image</strong>,
+  <strong>Xbox Certificate</strong>, <strong>Xbox Title Info</strong> and <strong>Xbox Deployment</strong>.
+  All settings are per-configuration.
+</p>
+
+<h2>Xbox Build</h2>
+<p>Compile/build settings — what the RXDK engine passes to the Zig toolchain.</p>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Build Flavor</td><td>Debug or Release (see <a href="configurations.htm">Configurations</a>).</td></tr>
+  <tr><td>Release Optimization</td><td>ReleaseFast / ReleaseSafe / ReleaseSmall for Release-flavored configs.</td></tr>
+  <tr><td>Preprocessor Definitions</td><td>Extra macros, on top of the built-in <code>_XBOX;XBOX</code>.</td></tr>
+  <tr><td>Additional / Public Include Directories</td><td>Extra include search dirs (also fed to IntelliSense).</td></tr>
+  <tr><td>Libraries</td><td>SDK libraries linked by name; <code>libkernel</code> is forced last automatically.</td></tr>
+  <tr><td>Additional Library Directories</td><td>Extra dirs to resolve <em>Libraries</em> names from (see <a href="libraries.htm">Libraries</a>).</td></tr>
+  <tr><td>Additional Dependencies</td><td>Explicit prebuilt <code>.lib</code> files linked by path.</td></tr>
+  <tr><td>Pre-Build / Post-Build Event</td><td>Commands run around the build (MSBuild macros allowed).</td></tr>
+</table>
+<p>All path fields accept MSBuild macros such as <code>$(ProjectDir)</code>, <code>$(Configuration)</code>,
+  <code>$(MSBuildProjectDirectory)</code>.</p>
+
+<h2>Xbox Image</h2>
+<p>The <code>imagebld</code> settings that turn the linked binary into the <code>.xbe</code>.</p>
+<table>
+  <tr><th>Setting</th><th>imagebld switch</th></tr>
+  <tr><td>Stack Size</td><td><code>/stack</code></td></tr>
+  <tr><td>Include Debug Info</td><td><code>/debug</code></td></tr>
+  <tr><td>Suppress Startup Banner</td><td><code>/nologo</code></td></tr>
+  <tr><td>Disable Library Warnings</td><td><code>/nolibwarn</code></td></tr>
+  <tr><td>Limit Memory (64 MB)</td><td><code>/limitmem</code></td></tr>
+  <tr><td>Don't Modify Hard Disk</td><td><code>/dontmodifyhd</code></td></tr>
+  <tr><td>Don't Mount / Format Utility Drive</td><td><code>/dontmountud</code> / <code>/formatud</code></td></tr>
+  <tr><td>Utility Drive Cluster Size</td><td><code>/udcluster</code></td></tr>
+  <tr><td>Suppress Preloading</td><td><code>/nopreload</code></td></tr>
+</table>
+
+<h2>Xbox Certificate</h2>
+<p>XBE certificate fields (<code>imagebld /TEST*</code>): Title ID, Alternate ID, Xbox Game Region,
+  Xbox Game Rating, Media Types, LAN Key, Sign Key. Leave blank to omit the switch.</p>
+
+<h2>Xbox Title Info</h2>
+<p>Title Name, XBE Version, and the Title Info / Title Image / Save Game Image files
+  (<code>/TESTNAME</code>, <code>/TESTVERSION</code>, <code>/TITLEINFO</code>, <code>/TITLEIMAGE</code>,
+  <code>/DEFAULTSAVEIMAGE</code>). Image/file paths are project-relative.</p>
+
+<h2>Xbox Deployment</h2>
+<p>How media is collected and whether a disc image is produced:</p>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Deployed Files</td><td>Files/dirs staged next to <code>default.xbe</code> (into the ISO and copied to the console on deploy) — e.g. <code>media</code>.</td></tr>
+  <tr><td>Embedded Files</td><td>Files baked into the XBE via <code>imagebld /INSERTFILE</code>, as <code>source|section</code> (e.g. <code>media\dsstdfx.bin|dsstdfx</code>).</td></tr>
+  <tr><td>Create ISO Image</td><td>Pack an <code>.iso</code> with <code>xdvdfs</code>, or stop at the <code>.xbe</code>.</td></tr>
+</table>
+</body>
+</html>

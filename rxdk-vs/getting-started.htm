@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Getting Started</title></head>
+<body>
+<h1>Getting started</h1>
+<p><a href="index.htm">&larr; Overview</a></p>
+
+<h2>1. Install prerequisites</h2>
+<p>
+  After installing the RXDK VSIX, open the RXDK tool window (<strong>RXDK &gt; RXDK Window</strong> on
+  the menu bar) and click <strong>Install Prerequisites</strong>. This downloads only what is missing —
+  the clean-room Zig toolchain, the host tools, the RXDK-SDK (headers + libs), and this documentation —
+  into <code>C:\ProgramData\RXDK</code>. It is safe to re-run; it will report when everything is already
+  present. It also installs the .NET 8 runtime the build engine needs (or use
+  <strong>Install .NET 8 Runtime</strong> separately).
+</p>
+
+<h2>2. Point RXDK at your devkit</h2>
+<p>
+  In the RXDK window, next to <strong>Xbox console</strong>, click <strong>Set…</strong> and enter your
+  devkit's IP address or hostname. This is stored where the host tools look for it, so build/deploy/debug
+  all use it. <strong>Warm Reboot Xbox</strong> reboots the console.
+</p>
+
+<h2>3. Create a project</h2>
+<p>
+  <strong>File &gt; New &gt; Project</strong>, filter by the <strong>Xbox</strong> platform, and pick a
+  template (for example <em>Original Xbox Game</em> for a spinning Direct3D 8 triangle). See
+  <a href="templates.htm">Project templates</a> for the full list. The new project has no
+  <code>rxdk.project.json</code> — everything is configured through the project's property pages.
+</p>
+
+<h2>4. Build</h2>
+<p>
+  Build normally: <strong>Build &gt; Build Solution</strong> (Ctrl+Shift+B), or right-click the project
+  &gt; <strong>Build</strong>. The RXDK engine compiles your sources with Zig, links against the SDK
+  libraries, produces the <code>.xbe</code>, and packs an <code>.iso</code>. Output goes to
+  <code>out\&lt;Configuration&gt;\</code> (e.g. <code>out\Debug\</code>), so Debug and Release don't
+  overwrite each other. Errors and warnings appear in the Error List and the <strong>RXDK</strong>
+  Output pane.
+</p>
+
+<h2>5. Deploy &amp; debug (F5)</h2>
+<p>
+  Press <strong>F5</strong> (or the green <strong>Xbox Debugger (RXDK)</strong> button). RXDK builds,
+  deploys the title and its media to the console, launches it, and attaches a source-level debugger over
+  <code>xbdm</code> — breakpoints, call stack, Locals, Watch, and registers all work. See
+  <a href="debugging.htm">Deploy &amp; debug</a> for details.
+</p>
+<p>
+  If the devkit was off when you pressed F5, fix it and use the project's right-click
+  <strong>Deploy to Xbox</strong> to retry the deploy without a full rebuild.
+</p>
+
+<h2>Build, deploy and debug are native VS</h2>
+<p>
+  There is no separate RXDK "build" or "run" command — use the standard VS gestures (Build menu, F5,
+  right-click the project). The RXDK window is for everything <em>around</em> that: the console, folders,
+  documentation, host tools, and setup.
+</p>
+</body>
+</html>

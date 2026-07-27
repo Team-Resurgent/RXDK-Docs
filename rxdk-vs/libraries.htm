@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Library Projects &amp; References</title></head>
+<body>
+<h1>Library projects &amp; references</h1>
+<p><a href="index.htm">&larr; Overview</a></p>
+
+<h2>Creating a library</h2>
+<p>
+  Add an <strong>Original Xbox Lib</strong> project to your solution (File &gt; New &gt; Project, or Add &gt;
+  New Project). It builds to a static <code>.lib</code>. Put its public headers under <code>include</code>
+  and list that folder in <strong>Xbox Build &gt; Public Include Directories</strong> so referencing
+  projects pick them up automatically.
+</p>
+
+<h2>Referencing a library</h2>
+<p>
+  In the executable project, right-click <strong>References &gt; Add Reference…</strong>, check the library
+  project, and click OK. That is all — no metadata to edit and no properties to set:
+</p>
+<ul>
+  <li>RXDK builds the library <strong>before</strong> the executable and links its <code>.lib</code>
+      automatically (the reference drives the link).</li>
+  <li>The reference is treated as <em>build-order-only</em> by default, so it never shows the
+      "cannot be resolved" warning that a plain Makefile-project reference otherwise would.</li>
+  <li>The library's public include folder is added to the executable's include path.</li>
+</ul>
+<p>
+  The multi-project <a href="templates.htm">Cube and Music Visualizer templates</a> are set up exactly
+  this way and are a good reference.
+</p>
+
+<h2>Linking an external prebuilt library</h2>
+<p>
+  To link a <code>.lib</code> that isn't an RXDK project (a prebuilt static library), use
+  <strong>Xbox Build &gt; Linker</strong>:
+</p>
+<ul>
+  <li><strong>Additional Dependencies</strong> — the <code>.lib</code> file(s) by path (project-relative or
+      absolute).</li>
+  <li><strong>Additional Library Directories</strong> — extra folders to resolve <em>Libraries</em> names
+      from, searched after the SDK lib dir (for linking your own libs by name).</li>
+</ul>
+<p>
+  External libraries must be built for the Xbox target (the RXDK GNU/clang ABI); an incompatible
+  <code>.lib</code> will fail at link time.
+</p>
+</body>
+</html>

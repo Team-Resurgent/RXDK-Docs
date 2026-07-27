@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Configurations</title></head>
+<body>
+<h1>Configurations</h1>
+<p><a href="index.htm">&larr; Overview</a></p>
+
+<h2>Debug and Release</h2>
+<p>
+  RXDK projects ship with the standard <strong>Debug</strong> and <strong>Release</strong> configurations.
+  <strong>Debug</strong> builds unoptimized with debug info (<code>-O0 -g</code>) and links the debug SDK
+  libraries; <strong>Release</strong> builds optimized and links the release libraries.
+</p>
+
+<h2>Build Flavor &amp; Release Optimization</h2>
+<p>
+  On <strong>Configuration Properties &gt; Xbox Build</strong>:
+</p>
+<ul>
+  <li><strong>Build Flavor</strong> — <em>Debug</em> or <em>Release</em>. This is what decides debug-vs-release
+      (SDK lib variant + optimize base), rather than the configuration's <em>name</em>. It defaults from the
+      name (the Debug config is Debug-flavored, everything else Release-flavored), but you set it explicitly
+      for a custom configuration.</li>
+  <li><strong>Release Optimization</strong> — for Release-flavored configs, the Zig optimize mode:
+      <em>ReleaseFast</em> (default, fastest runtime), <em>ReleaseSafe</em> (runtime safety checks), or
+      <em>ReleaseSmall</em> (smallest size). Ignored for Debug.</li>
+</ul>
+
+<h2>Custom configurations</h2>
+<p>
+  To add your own configuration (e.g. "MyApp"), use <strong>Build &gt; Configuration Manager &gt; New</strong>
+  and copy from Debug or Release. Then, on the Xbox Build page for that configuration, set:
+</p>
+<ul>
+  <li><strong>Build Flavor</strong> — Debug or Release.</li>
+  <li><strong>Preprocessor Definitions</strong> — extra macros (on top of the built-in <code>_XBOX;XBOX</code>).</li>
+  <li><strong>Libraries</strong> — the SDK libs to link.</li>
+</ul>
+<p>Every field on the RXDK pages is per-configuration, so each configuration can differ. Use the
+  <strong>Configuration</strong> dropdown (or "All Configurations") at the top of the Property Pages dialog.</p>
+
+<h2>Output directory</h2>
+<p>
+  Build output goes to <code>out\&lt;Configuration&gt;\</code> — for example <code>out\Debug\</code>,
+  <code>out\Release\</code>, or <code>out\MyApp\</code> — so different configurations don't overwrite each
+  other. The General page's <strong>Output Directory</strong> reflects this. The location is controlled by
+  the <code>RxdkOutDir</code> property (default <code>out\$(Configuration)</code>) if you need to change it.
+</p>
+</body>
+</html>

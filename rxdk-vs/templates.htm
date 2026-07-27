@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — Project Templates</title></head>
+<body>
+<h1>Project templates</h1>
+<p><a href="index.htm">&larr; Overview</a></p>
+<p>
+  In <strong>File &gt; New &gt; Project</strong>, filter by the <strong>Xbox</strong> platform to see the
+  RXDK templates. All build with the clean-room Zig toolchain and are ready to F5-debug on a devkit.
+</p>
+
+<h2>Single-project templates</h2>
+<table>
+  <tr><th>Template</th><th>What it is</th></tr>
+  <tr><td>Original Xbox Game</td><td>A rotating Direct3D 8 triangle — the standard starting point.</td></tr>
+  <tr><td>Original Xbox Empty</td><td>An idle title that brings up nothing; a blank starting point.</td></tr>
+  <tr><td>Original Xbox Lib</td><td>A static library (<code>.lib</code>) other titles reference (see <a href="libraries.htm">Library projects</a>).</td></tr>
+  <tr><td>Original Xbox DXT</td><td>A debug-monitor extension (<code>.dxt</code>) that <code>xbdm</code> loads from <code>E:\dxt</code> at boot.</td></tr>
+  <tr><td>Original Xbox Controller Input</td><td>Reads gamepad, mouse, IR remote and keyboard, and prints events to an on-screen terminal.</td></tr>
+  <tr><td>Original Xbox Font Scroller</td><td>A demoscene-style <code>libxfont</code> scroller (sine bounce, stretch-blit, colour cycle).</td></tr>
+  <tr><td>Original Xbox Network Server</td><td>Brings up XNet + DHCP and hosts a tiny HTTP server; shows the URL on screen.</td></tr>
+  <tr><td>Original Xbox Video Player</td><td>Streams an <code>.xmv</code> movie with <code>libxmv</code> and DirectSound; embeds <code>dsstdfx.bin</code> and deploys the video alongside the XBE.</td></tr>
+</table>
+
+<h2>Multi-project templates</h2>
+<p>These create a solution with two projects — an executable plus a static library it references:</p>
+<table>
+  <tr><th>Template</th><th>What it is</th></tr>
+  <tr><td>Original Xbox Cube (Multi-Project)</td><td>A spinning textured cube whose geometry comes from a <code>cubemesh</code> library project.</td></tr>
+  <tr><td>Original Xbox Music Visualizer (Multi-Project)</td><td>A D3D8 FFT equalizer that streams an Ogg Vorbis track through a <code>vorbis</code> decoder library project.</td></tr>
+</table>
+<p>
+  The executable references the library natively (Solution Explorer &gt; References); RXDK builds the
+  library first and links it automatically. See <a href="libraries.htm">Library projects &amp; references</a>.
+</p>
+
+<h2>What a new project contains</h2>
+<p>A generated project keeps its build inputs in Solution Explorer folders:</p>
+<ul>
+  <li><strong>src</strong> — your source files.</li>
+  <li><strong>media</strong> (where applicable) — runtime assets deployed alongside the XBE.</li>
+  <li><strong>RXDK</strong> — the shared build files (<code>Rxdk.Xbox.props</code>/<code>.targets</code>) and the
+      property-page rule files. You normally don't edit these; use the property pages instead.</li>
+</ul>
+</body>
+</html>
