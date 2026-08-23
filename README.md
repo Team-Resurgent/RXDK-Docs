@@ -1,5 +1,17 @@
 # RXDK-Docs
 
+<p align="center"><b>In-editor HTML documentation for the RXDK Xbox SDK and its Visual Studio / VS Code extensions</b></p>
+
+<p align="center">
+  <a href="https://github.com/Team-Resurgent/RXDK-Docs/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
+  <a href="https://discord.gg/VcdSfajQGK"><img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg?logo=discord" alt="Discord"></a>
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/J3J7L5UMN"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi"></a>
+  <a href="https://www.patreon.com/teamresurgent"><img src="https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Patreon"></a>
+</p>
+
 In-editor HTML documentation for [RXDK-VSCode](https://github.com/Team-Resurgent/RXDK-VSCode) and other
 RXDK tooling. RXDK-VSCode **clones this repository** to `%ProgramData%\RXDK\docs` (like the SDK
 libraries) and renders it in a themed doc viewer; the [`VERSION`](VERSION) file tracks the installed
