@@ -7,6 +7,7 @@
     { "name": "Project Manifest (rxdk.project.json)", "page": "project-manifest.htm", "children": [] },
     { "name": "Debugging", "page": "debugging.htm", "children": [] },
     { "name": "Prebuilt-XBE Projects", "page": "prebuilt-xbe.htm", "children": [] },
+    { "name": "C/C++ Features", "page": "c-cpp-features.htm", "children": [] },
     { "name": "Settings", "page": "settings.htm", "children": [] },
     { "name": "Commands", "page": "commands.htm", "children": [] }
   ]

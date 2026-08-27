@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>RXDK for Visual Studio — C/C++ Features</title></head>
+<body>
+<h1>C/C++ Features</h1>
+<p>
+  RXDK builds your title against a from-source C runtime (picolibc) and C++ runtime
+  (libc++ / libc++abi), so the standard library behaves as you'd expect. On top of that it adds a
+  small set of <strong>first-party runtime hooks</strong>: registration points a title (or
+  <code>libxapi</code>) installs a callback into, so the C library can route console input, program
+  output, image launching, and crash reporting through <em>your</em> code.
+</p>
+<p>
+  The reason these are hooks rather than fixed behavior: <code>libc</code> deliberately stays
+  <em>kernel-only</em> — it can't own platform policy like &ldquo;where does console input come
+  from&rdquo; or &ldquo;how is another XBE launched&rdquo; without guessing or depending on higher
+  layers. Instead it exposes the callbacks below. <strong>With no handler registered, libc falls back
+  to a safe default</strong> (EOF for input, <code>DbgPrint</code> for output, <code>ENOSYS</code> for
+  exec), so a title that never sets a hook still links and runs.
+</p>
+
+<h2>A full C/C++ runtime on a non-terminal console</h2>
+<p>
+  The original Xbox has no shell, no TTY, no OS-level environment, and no process model — so a lot of
+  everyday C/C++ plumbing has, by default, nowhere to go. RXDK's from-source runtime (picolibc for C,
+  libc++ / libc++abi for C++, plus the Xbox API) nevertheless implements a large, standards-conformant
+  slice of it, kernel-backed where it needs to be. Much of this is easy to overlook because you
+  wouldn't expect it to exist on this hardware. Highlights:
+</p>
+
+<h3>POSIX plumbing</h3>
+<table>
+  <tr><th>Capability</th><th>API</th><th>Notes</th></tr>
+  <tr><td>Anonymous pipes</td><td><code>pipe</code>, <code>read</code>/<code>write</code>/<code>close</code></td><td>Real kernel pipe buffer with true <code>read()==0</code> EOF; a reader blocks until another thread writes — not a busy poll.</td></tr>
+  <tr><td>Descriptor table</td><td><code>dup2</code></td><td>A genuine fd table — alias a pipe end onto another fd; <code>dup2(1, 2)</code> redirects stderr to stdout.</td></tr>
+  <tr><td>Regular expressions</td><td><code>regcomp</code>/<code>regexec</code>/<code>regfree</code></td><td>POSIX extended regex (Henry Spencer), capture-group offsets, <code>REG_NOMATCH</code>.</td></tr>
+  <tr><td>Entropy (CSPRNG)</td><td><code>getentropy</code></td><td>Hardware-backed entropy — this is what <code>std::random_device</code> rides on.</td></tr>
+  <tr><td>Signals</td><td><code>signal</code>/<code>raise</code>/<code>sigprocmask</code>/<code>sigpending</code></td><td>Synchronous delivery, disposition reset, block&rarr;pending&rarr;unblock semantics.</td></tr>
+  <tr><td>CPU-time accounting</td><td><code>times</code> (<code>struct tms</code>)</td><td><code>tms_utime</code> advances with work done.</td></tr>
+  <tr><td>Environment</td><td><code>getenv</code>/<code>setenv</code>/<code>unsetenv</code></td><td>Process-local in-memory <code>environ</code> (there is no OS environment to inherit).</td></tr>
+  <tr><td>Temp + stdio filesystem</td><td><code>tmpfile</code>, <code>mkdir</code>/<code>stat</code>/<code>rename</code>/<code>remove</code>/<code>fseek</code></td><td>Kernel-backed over mounted drives. RXDK even supplies a real <code>rename()</code> picolibc doesn't ship.</td></tr>
+</table>
+
+<h3>Modern C++ that actually works (libc++)</h3>
+<table>
+  <tr><th>Area</th><th>What's available</th></tr>
+  <tr><td>Exceptions</td><td>Real DWARF / Itanium EH with libunwind: throw across frames, destructors run during unwind, <code>catch</code> + rethrow. (Titles ship <code>-fno-exceptions</code> and use <code>error_code</code> overloads by default, but the runtime fully supports EH.)</td></tr>
+  <tr><td>Filesystem</td><td><code>std::filesystem</code> over FATX: <code>create_directory</code>, <code>directory_iterator</code>, <code>file_size</code>, <code>rename</code>, <code>remove_all</code>.</td></tr>
+  <tr><td>Threads</td><td><code>std::thread</code>, <code>std::mutex</code>/<code>lock_guard</code>, <code>condition_variable</code>, <code>shared_mutex</code>, <code>std::async</code>/<code>future</code>.</td></tr>
+  <tr><td>C++20 sync</td><td><code>atomic&lt;T&gt;::wait</code>/<code>notify</code>, <code>std::latch</code>, <code>counting_semaphore</code>, <code>barrier</code> (futex-like backend).</td></tr>
+  <tr><td>Time &amp; random</td><td><code>&lt;chrono&gt;</code> on real clocks (<code>system_clock</code>, monotonic <code>steady_clock</code>); <code>&lt;random&gt;</code> (<code>mt19937</code>, <code>random_device</code>&rarr;<code>getentropy</code>).</td></tr>
+  <tr><td>Text</td><td><code>std::format</code>/<code>print</code>/<code>println</code>, <code>&lt;charconv&gt;</code> (integer + ryu float), <code>std::regex</code>, iostreams + <code>fstream</code>/<code>stringstream</code>.</td></tr>
+  <tr><td>Coroutines</td><td>C++20 <code>&lt;coroutine&gt;</code> and C++23 <code>std::generator</code> (including <code>ranges::elements_of</code>).</td></tr>
+  <tr><td>C++23 vocabulary</td><td><code>std::expected</code>, monadic <code>optional</code>, <code>mdspan</code>, <code>flat_map</code>, <code>pmr</code>, <code>any</code>, <code>span</code>, ranges pipelines.</td></tr>
+  <tr><td>Thread-local</td><td><code>thread_local</code> with non-trivial destructors run at thread exit (emulated-TLS + <code>__cxa_thread_atexit</code>).</td></tr>
+</table>
+
+<h3>C11 / C17 / C23 library</h3>
+<table>
+  <tr><th>Header</th><th>What's there</th></tr>
+  <tr><td><code>&lt;threads.h&gt;</code></td><td>C11 threads: <code>thrd_*</code>, <code>mtx_*</code>, <code>tss_*</code>.</td></tr>
+  <tr><td><code>&lt;stdatomic.h&gt;</code></td><td><code>atomic_int</code>, <code>atomic_fetch_add</code>, <code>compare_exchange_strong</code>, <code>atomic_flag</code>.</td></tr>
+  <tr><td><code>&lt;stdbit.h&gt;</code> (C23)</td><td>Full bit set with <code>_Generic</code> dispatch: <code>stdc_leading_zeros</code>, <code>stdc_bit_width</code>, <code>stdc_bit_ceil</code>, <code>stdc_has_single_bit</code>, &hellip;</td></tr>
+  <tr><td><code>&lt;stdckdint.h&gt;</code> (C23)</td><td>Checked arithmetic: <code>ckd_add</code>/<code>ckd_sub</code>/<code>ckd_mul</code> with overflow detection into narrow types.</td></tr>
+  <tr><td><code>&lt;uchar.h&gt;</code> (C23)</td><td><code>char16_t</code>/<code>char32_t</code>, <code>mbrtoc16</code>/<code>mbrtoc32</code>.</td></tr>
+  <tr><td><code>&lt;complex.h&gt;</code>, <code>&lt;tgmath.h&gt;</code></td><td>Complex arithmetic and type-generic math dispatch.</td></tr>
+  <tr><td><code>&lt;fenv.h&gt;</code></td><td>FPU rounding-mode control (<code>fesetround</code>) + exception flags.</td></tr>
+  <tr><td><code>&lt;setjmp.h&gt;</code>, <code>&lt;wchar.h&gt;</code>, <code>&lt;locale.h&gt;</code></td><td><code>setjmp</code>/<code>longjmp</code>, wide strings + ctype, a minimal <code>"C"</code> locale.</td></tr>
+</table>
+
+<h3>Threading, memory &amp; time guarantees</h3>
+<ul>
+  <li><strong>Per-thread <code>errno</code></strong> and <strong>thread-safe <code>malloc</code>/<code>free</code></strong> under contention (picolibc's allocator locks were retargeted for thread safety).</li>
+  <li><strong>Cooperative fibers</strong> — <code>ConvertThreadToFiber</code>/<code>CreateFiber</code>/<code>SwitchToFiber</code>/<code>DeleteFiber</code>.</li>
+  <li><strong>Kernel-backed heap</strong> far beyond a small static heap (commit-on-demand, multi-MiB allocations), plus Win32 <code>VirtualAlloc</code>/<code>HeapAlloc</code>.</li>
+  <li><strong>Monotonic vs wall-clock:</strong> <code>clock_gettime(CLOCK_MONOTONIC)</code> vs <code>gettimeofday</code> vs <code>clock()</code>, and xAPI <code>QueryPerformanceCounter</code>.</li>
+  <li>Win32 threading/sync/TLS (<code>CreateThread</code>, <code>CRITICAL_SECTION</code>, events, <code>Interlocked*</code>, <code>TlsAlloc</code>) alongside the C/C++ primitives.</li>
+</ul>
+
+<h3>Gotchas worth knowing</h3>
+<ul>
+  <li><strong>POSIX/GNU visibility:</strong> the clock API (<code>clock_gettime</code>, <code>CLOCK_MONOTONIC</code>) is gated behind <code>__POSIX_VISIBLE</code>/<code>__GNU_VISIBLE</code> — under <code>-std=c23</code>, define <code>_GNU_SOURCE</code> (or <code>_POSIX_C_SOURCE</code>) to see it.</li>
+  <li><strong>Exceptions vs <code>-fno-exceptions</code>:</strong> the runtime supports EH, but the SDK builds titles <code>-fno-exceptions</code> by default — prefer the <code>error_code</code> overloads (<code>&lt;filesystem&gt;</code>, <code>&lt;charconv&gt;</code>) unless you opt exceptions back in.</li>
+  <li><strong>Non-blocking sockets on a dev kit:</strong> with <code>libxnet</code>, a blocking socket call can starve the DPC-driven network stack — set <code>ioctlsocket(FIONBIO)</code> and drive sockets non-blocking.</li>
+  <li><strong>MSVC <code>printf</code> quirks:</strong> <code>_snprintf</code>/<code>_vsnprintf</code> keep the non-C99 semantics ported titles rely on (no NUL-terminate when full, return <code>-1</code> on truncation).</li>
+</ul>
+
+<h2>libc I/O + process hooks</h2>
+<p>
+  Declared in <code>&lt;xbox/libc_hooks.h&gt;</code>. Each <code>rxdk_set_*_handler()</code> installs a
+  C function pointer; passing <code>NULL</code> restores the default. The handlers use POSIX-style
+  signatures (<code>ssize_t</code> / <code>size_t</code> from <code>&lt;sys/types.h&gt;</code>).
+</p>
+<table>
+  <tr><th>Hook</th><th>Fired by</th><th>Default when unset</th></tr>
+  <tr><td><code>rxdk_set_stdin_handler</code></td><td><code>read(0,&hellip;)</code> — and therefore <code>getchar</code>, <code>fgets(&hellip;, stdin)</code>, <code>std::cin</code></td><td>EOF (returns 0)</td></tr>
+  <tr><td><code>rxdk_set_output_handler</code></td><td><code>write(1,&hellip;)</code>/<code>write(2,&hellip;)</code> — and therefore <code>printf</code>, <code>fputs</code>, <code>fprintf</code>, <code>std::cout</code></td><td><code>DbgPrint</code> (debug monitor)</td></tr>
+  <tr><td><code>rxdk_set_exec_handler</code></td><td><code>execve(path, argv, envp)</code></td><td><code>ENOSYS</code></td></tr>
+</table>
+<p>The callback types, straight from the header:</p>
+<pre><code>typedef ssize_t (*rxdk_stdin_fn)(void* buf, size_t count);
+typedef ssize_t (*rxdk_output_fn)(int fd, const void* buf, size_t count);
+typedef int     (*rxdk_exec_fn)(const char* path, char* const argv[], char* const envp[]);
+
+void rxdk_set_stdin_handler(rxdk_stdin_fn fn);
+void rxdk_set_output_handler(rxdk_output_fn fn);
+void rxdk_set_exec_handler(rxdk_exec_fn fn);</code></pre>
+
+<h3>Console input (the <code>getch</code> / stdin hook)</h3>
+<p>
+  <code>read(fd&nbsp;0, buf, count)</code> — and everything layered on it (<code>getchar</code>,
+  <code>scanf</code>, <code>fgets(&hellip;, stdin)</code>, <code>std::cin</code>) — calls your handler.
+  Return the number of bytes written into <code>buf</code>, <code>0</code> for EOF, or <code>-1</code>
+  for an error. This is where you feed characters from a USB keyboard, a debug channel, or a scripted
+  test.
+</p>
+<pre><code>#include &lt;xbox/libc_hooks.h&gt;
+#include &lt;string.h&gt;
+
+/* Supplies bytes to read(0)/getchar()/std::cin. */
+static ssize_t my_stdin(void* buf, size_t count)
+{
+    const char* line = "hello\n";
+    size_t n = strlen(line);
+    if (n &gt; count)
+        n = count;
+    memcpy(buf, line, n);
+    return (ssize_t)n;   /* 0 = EOF, -1 = error */
+}
+
+rxdk_set_stdin_handler(my_stdin);   /* rxdk_set_stdin_handler(NULL) restores EOF */</code></pre>
+
+<h3>Program output (printf / stdout / stderr)</h3>
+<p>
+  <code>write(1,&hellip;)</code> and <code>write(2,&hellip;)</code> — the sinks behind
+  <code>printf</code>, <code>fputs</code>, <code>fprintf</code>, and <code>std::cout</code>/<code>std::cerr</code>
+  — route to your handler <em>instead of</em> <code>DbgPrint</code>. The <code>fd</code> argument tells
+  you which stream it was (<code>1</code> = stdout, <code>2</code> = stderr). Return the number of bytes
+  consumed. Use this to draw a console overlay, log to a file, or forward output over the network.
+</p>
+<pre><code>#include &lt;xbox/libc_hooks.h&gt;
+#include "xbox/kernel.h"
+
+/* Everything printf()/std::cout writes arrives here. */
+static ssize_t my_output(int fd, const void* buf, size_t count)
+{
+    DbgPrint("[fd %d] %.*s", fd, (int)count, (const char*)buf);
+    return (ssize_t)count;   /* bytes written */
+}
+
+rxdk_set_output_handler(my_output);
+printf("hello from RXDK\n");   /* -&gt; my_output(1, "hello from RXDK\n", 16) */</code></pre>
+
+<h3>Launching another image (exec)</h3>
+<p>
+  <code>execve(path, argv, envp)</code> calls your handler, which is where you hand off to the Xbox
+  launch API. Like <code>execve</code>, a successful launch does not return; return <code>-1</code>
+  (and set <code>errno</code>) on failure. All three arguments — the image path, the
+  <code>NULL</code>-terminated <code>argv</code>, and <code>envp</code> — are passed straight through.
+</p>
+<pre><code>#include &lt;xbox/libc_hooks.h&gt;
+#include "xbox/kernel.h"
+
+static int my_exec(const char* path, char* const argv[], char* const envp[])
+{
+    (void)argv;
+    (void)envp;
+    DbgPrint("launch: %s\n", path);
+    /* ... hand off to the title-launch API ... */
+    return -1;   /* only returns on failure, like execve */
+}
+
+rxdk_set_exec_handler(my_exec);</code></pre>
+
+<h2>Catch-all unhandled C++ exception</h2>
+<p>
+  RXDK's C++ runtime provides the standard <code>&lt;exception&gt;</code> machinery, so the catch-all
+  for an <strong>uncaught exception</strong> is ordinary C++: install a handler with
+  <code>std::set_terminate</code>. <code>std::terminate</code> fires when an exception escapes
+  <code>main</code> with no matching <code>catch</code>, or when stack unwinding can't find a handler.
+  Without a handler an uncaught throw halts silently; a terminate handler lets you report it (over the
+  debug monitor) and park so a debugger can attach.
+</p>
+<pre><code>#include &lt;exception&gt;
+#include "xbox/kernel.h"
+
+/* Fires on an uncaught throw, or when unwinding finds no handler. */
+static void rxdk_terminate()
+{
+    DbgPrint("RXDK: std::terminate -- unhandled C++ exception\n");
+    for (;;)
+        ;   /* park so the debugger can attach */
+}
+
+int main()
+{
+    std::set_terminate(rxdk_terminate);
+    /* ... your title ... */
+}</code></pre>
+
+<h2>Other exception &amp; signal entry points</h2>
+<p>These also exist but are secondary to the paths above:</p>
+<ul>
+  <li>
+    <strong>Win32 top-level SEH filter</strong> — <code>SetUnhandledExceptionFilter()</code>
+    (from <code>&lt;winbase.h&gt;</code>) installs a structured-exception filter that runs when no
+    <code>__try/__except</code> handles a hardware/structured exception. Use it for a native crash
+    handler where you want the faulting context (<code>EXCEPTION_POINTERS</code>) rather than a C++
+    throw.
+  </li>
+  <li>
+    <strong>POSIX signals</strong> — <code>signal(sig, handler)</code> (from <code>&lt;signal.h&gt;</code>)
+    registers a C callback for signals such as <code>SIGTERM</code>/<code>SIGINT</code> raised via
+    <code>raise()</code>.
+  </li>
+</ul>
+
+<p>See also: <a href="getting-started.htm">Getting started</a> &middot; <a href="libraries.htm">Library projects &amp; references</a> &middot; <a href="debugging.htm">Deploy &amp; debug</a> &middot; <a href="index.htm">Overview</a>.</p>
+</body>
+</html>

@@ -8,6 +8,7 @@
     { "name": "Configurations", "page": "configurations.htm", "children": [] },
     { "name": "Property Pages", "page": "property-pages.htm", "children": [] },
     { "name": "Library Projects & References", "page": "libraries.htm", "children": [] },
+    { "name": "C/C++ Features", "page": "c-cpp-features.htm", "children": [] },
     { "name": "Deploy & Debug", "page": "debugging.htm", "children": [] },
     { "name": "The RXDK Window", "page": "rxdk-window.htm", "children": [] }
   ]
