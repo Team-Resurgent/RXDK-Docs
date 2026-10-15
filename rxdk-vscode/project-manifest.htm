@@ -16,28 +16,41 @@
 </ul>
 
 <h2>Minimal example</h2>
+<p>
+  This is the layout the <strong>RXDK: New Project</strong> templates generate: shared fields at the top
+  level, and a <a href="#configurations"><code>configurations</code></a> object with one block per
+  configuration, each naming its own SDK libraries (Debug and Release variants are different files).
+</p>
 <pre><code>{
   "name": "my-triangle",
   "sources": ["src/main.cpp"],
-  "libraries": ["libd3d8", "libd3dx8", "libxapi", "libc", "libcpp", "libkernel"],
-  "outputDir": "out",
-  "imageBuild": {
-    "stackSize": 65536,
-    "debug": true,
-    "noLogo": true,
-    "noLibWarn": true
+  "defaultConfiguration": "Debug",
+  "configurations": {
+    "Debug": {
+      "configuration": "debug",
+      "libraries": ["libd3d8d.lib", "libd3dx8d.lib", "libxapid.lib", "libcd.lib", "libcppd.lib", "libkerneld.lib", "libcompatd.lib"],
+      "outputDir": "out/Debug",
+      "imageBuild": { "stackSize": 65536, "debug": true, "noLogo": true, "noLibWarn": true }
+    },
+    "Release": {
+      "configuration": "release",
+      "libraries": ["libd3d8.lib", "libd3dx8.lib", "libxapi.lib", "libc.lib", "libcpp.lib", "libkernel.lib", "libcompat.lib"],
+      "outputDir": "out/Release",
+      "imageBuild": { "stackSize": 65536, "debug": true, "noLogo": true, "noLibWarn": true }
+    }
   }
 }</code></pre>
 
 <h2>Full example (media + embedded file + extra include/defines)</h2>
+<p>
+  Any field may sit at the top level (shared by every configuration) or inside a configuration block
+  (that configuration only); a field set in the block replaces the top-level one.
+</p>
 <pre><code>{
   "name": "my-tone",
   "sources": ["src/main.cpp", "src/audio.cpp"],
-  "libraries": ["libdsound", "libxapi", "libc", "libcpp", "libkernel"],
-  "configuration": "release",
   "includePaths": ["include"],
-  "defines": ["MY_FEATURE=1", "AUDIO_DEBUG"],
-  "outputDir": "out",
+  "defines": ["MY_FEATURE=1"],
   "deployPaths": ["media"],
   "embed": [{ "path": "media/dsstdfx.bin", "name": "dsstdfx" }],
   "imageBuild": {
@@ -47,7 +60,37 @@
     "noLibWarn": true,
     "limitMemory": false,
     "noPreload": [".data"]
+  },
+  "defaultConfiguration": "Debug",
+  "configurations": {
+    "Debug": {
+      "configuration": "debug",
+      "defines": ["MY_FEATURE=1", "AUDIO_DEBUG"],
+      "libraries": ["libdsoundd.lib", "libxapid.lib", "libcd.lib", "libcppd.lib", "libkerneld.lib", "libcompatd.lib"],
+      "outputDir": "out/Debug"
+    },
+    "Release": {
+      "configuration": "release",
+      "libraries": ["libdsound.lib", "libxapi.lib", "libc.lib", "libcpp.lib", "libkernel.lib", "libcompat.lib"],
+      "outputDir": "out/Release"
+    }
   }
+}</code></pre>
+
+<h2 id="flat">Single-configuration (flat) manifests</h2>
+<p>
+  <code>configurations</code> is optional. A manifest without it is a single implicit configuration:
+  every field is read from the top level, exactly as written. The top-level
+  <a href="#configuration"><code>configuration</code></a> flag still decides how your sources are compiled,
+  and the top-level <a href="#libraries"><code>libraries</code></a> are still linked verbatim &mdash; nothing
+  is renamed for you, so a flat Debug manifest has to spell the Debug files itself:
+</p>
+<pre><code>{
+  "name": "my-triangle",
+  "sources": ["src/main.cpp"],
+  "configuration": "debug",
+  "libraries": ["libd3d8d.lib", "libd3dx8d.lib", "libxapid.lib", "libcd.lib", "libcppd.lib", "libkerneld.lib", "libcompatd.lib"],
+  "imageBuild": { "stackSize": 65536, "debug": true }
 }</code></pre>
 
 <h2>Top-level properties</h2>
@@ -61,12 +104,13 @@
 </p>
 
 <h3><code>type</code></h3>
-<p><strong>Type:</strong> <code>"executable"</code> | <code>"library"</code> · Optional (default <code>"executable"</code>)</p>
+<p><strong>Type:</strong> <code>"executable"</code> | <code>"library"</code> | <code>"dxt"</code> · Optional (default <code>"executable"</code>)</p>
 <p>
   <code>"executable"</code> builds an <code>.xbe</code>. <code>"library"</code> builds a static
-  <code>out/&lt;name&gt;.lib</code> that other projects link via
+  <code>&lt;outputDir&gt;/&lt;name&gt;.lib</code> that other projects link via
   <a href="#projectReferences"><code>projectReferences</code></a>; a library is <strong>not</strong>
-  deployed or run. See <a href="#multiproject">Multi-project builds</a>.
+  deployed or run. See <a href="#multiproject">Multi-project builds</a>. <code>"dxt"</code> builds a
+  debug-monitor extension (<code>.dxt</code>, entry point <code>DxtEntry</code>) instead of an XBE.
 </p>
 
 <h3><code>sources</code></h3>
@@ -78,41 +122,111 @@
   Example: <code>["src/main.cpp", "src/render/mesh.cpp"]</code>
 </p>
 
-<h3><code>libraries</code></h3>
-<p><strong>Type:</strong> <code>string[]</code> · Source projects only</p>
+<h3 id="libraries"><code>libraries</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Source projects only · Usually set per configuration</p>
 <p>
-  RXDK-SDK libraries to link, <strong>without</strong> the <code>.lib</code> extension. Order can
-  matter for static linking; keep the low-level libs (<code>libc</code>, <code>libcpp</code>,
-  <code>libkernel</code>) last. Common libraries:
+  RXDK-SDK libraries to link, named <strong>exactly</strong> as the files in the SDK's
+  <code>lib</code> folder, <strong>including</strong> the <code>.lib</code> extension &mdash; like a
+  Visual Studio <em>Additional Dependencies</em> list. The names are used verbatim: RXDK never adds the
+  <code>.lib</code> extension or the Debug <code>d</code> suffix for you. The SDK ships both variants of
+  every library side by side in one folder; the Debug one has a <code>d</code> before the extension
+  (<code>libd3d8.lib</code> / <code>libd3d8d.lib</code>, <code>libxapi.lib</code> / <code>libxapid.lib</code>,
+  <code>libc.lib</code> / <code>libcd.lib</code>, <code>libcpp.lib</code> / <code>libcppd.lib</code>,
+  <code>libkernel.lib</code> / <code>libkerneld.lib</code>). That is why the Debug and Release
+  <a href="#configurations">configurations</a> each carry their own list.
+</p>
+<p>
+  Names are looked up in the SDK <code>lib</code> folder first, then in each
+  <a href="#libraryPaths"><code>libraryPaths</code></a> directory; a name that isn't found fails the build
+  (<em>Missing library</em>). Duplicates are dropped and <code>libcompat.lib</code>/<code>libcompatd.lib</code>
+  is always linked whole-archive ahead of the rest. <code>libkernel.lib</code> is moved to the end, but only
+  under that exact name, so list <code>libkerneld.lib</code> after the other libraries yourself. Everything
+  else links in the order listed. Common libraries (Release name; the Debug file adds <code>d</code>):
 </p>
 <table>
   <tr><th>Library</th><th>Provides</th></tr>
-  <tr><td><code>libd3d8</code></td><td>Direct3D 8 (graphics)</td></tr>
-  <tr><td><code>libd3dx8</code></td><td>D3DX 8 math/texture helpers</td></tr>
-  <tr><td><code>libdsound</code></td><td>DirectSound (audio)</td></tr>
-  <tr><td><code>libxapi</code></td><td>Xbox API (threads, files, input plumbing, launch)</td></tr>
-  <tr><td><code>libxmv</code></td><td>XMV video playback</td></tr>
-  <tr><td><code>libxfont</code></td><td>Bitmap-font text rendering</td></tr>
-  <tr><td><code>libxnet</code></td><td>XNet TCP/IP networking + Berkeley sockets</td></tr>
-  <tr><td><code>libc</code></td><td>C runtime (picolibc)</td></tr>
-  <tr><td><code>libcpp</code></td><td>C++ runtime</td></tr>
-  <tr><td><code>libkernel</code></td><td><code>xboxkrnl</code> import stubs (always required)</td></tr>
+  <tr><td><code>libd3d8.lib</code></td><td>Direct3D 8 (graphics)</td></tr>
+  <tr><td><code>libd3dx8.lib</code></td><td>D3DX 8 math/texture helpers</td></tr>
+  <tr><td><code>libxgraphics.lib</code></td><td>XGraphics helpers, including the XFONT bitmap-font API (<code>xfont.h</code>)</td></tr>
+  <tr><td><code>libdsound.lib</code></td><td>DirectSound (audio)</td></tr>
+  <tr><td><code>libxact.lib</code></td><td>XACT audio engine</td></tr>
+  <tr><td><code>libdmusic.lib</code></td><td>DirectMusic</td></tr>
+  <tr><td><code>libxapi.lib</code></td><td>Xbox API (threads, files, input plumbing, launch). Linking it (either spelling) makes the title start at <code>XapiTitleStartup</code>, which sets up the xAPI drives before <code>main</code>.</td></tr>
+  <tr><td><code>libxmv.lib</code></td><td>XMV video playback</td></tr>
+  <tr><td><code>libxnet.lib</code></td><td>XNet TCP/IP networking + Berkeley sockets</td></tr>
+  <tr><td><code>libxonline.lib</code></td><td>Xbox Live (online) services</td></tr>
+  <tr><td><code>libxbdm.lib</code></td><td>Debug monitor API (<code>xbdm.h</code>; DXT projects link it)</td></tr>
+  <tr><td><code>libc.lib</code></td><td>C runtime (picolibc)</td></tr>
+  <tr><td><code>libcpp.lib</code></td><td>C++ runtime (operator <code>new</code>/<code>delete</code>, RTTI, exceptions)</td></tr>
+  <tr><td><code>libkernel.lib</code></td><td><code>xboxkrnl</code> import stubs (always required)</td></tr>
+  <tr><td><code>libcompat.lib</code></td><td>x87-safe math/memory routines that must override the compiler's built-in copies (listed by every template and sample)</td></tr>
 </table>
+<p>
+  The SDK's <code>lib</code> folder also holds <code>libxneto</code>, <code>libxvoice</code>, <code>libuix</code>
+  and <code>libd3d8i</code> (each with its <code>…d.lib</code> Debug file); check that folder for the exact names.
+</p>
+<blockquote>
+  <strong>List <code>libcpp.lib</code> (Debug: <code>libcppd.lib</code>) whenever you link a C++ SDK library,</strong>
+  even from a C-only project. Several SDK libraries are written in C++ and call into the C++ runtime:
+  <code>libxapi</code>, <code>libdsound</code>, <code>libd3dx8</code>, <code>libxgraphics</code>,
+  <code>libxact</code> and <code>libdmusic</code>. Without <code>libcpp</code> the link fails with undefined
+  <code>operator new</code>/<code>delete</code> or RTTI symbols. The same goes for a
+  <a href="#multiproject">library project</a> that uses one of them: whichever project performs the final
+  link has to list <code>libcpp</code>.
+</blockquote>
+
+<h3 id="libraryPaths"><code>libraryPaths</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional</p>
+<p>
+  Extra directories (project-relative or absolute) searched for <a href="#libraries"><code>libraries</code></a>
+  names, after the SDK <code>lib</code> folder. Use it to link your own prebuilt libraries by name.
+</p>
+
+<h3><code>additionalLibraries</code></h3>
+<p><strong>Type:</strong> <code>string[]</code> · Optional</p>
+<p>
+  Prebuilt static-library files linked by path (project-relative or absolute), in addition to
+  <code>libraries</code>. A missing file fails the build. They must be built for the original Xbox target.
+</p>
 
 <h3 id="configuration"><code>configuration</code></h3>
 <p><strong>Type:</strong> <code>"debug" | "release"</code> · Optional (default: <code>release</code>) · Source projects only</p>
 <p>
-  Which prebuilt SDK library variant this project links. The SDK ships every library
-  (<code>libraries</code> above) in two flavors side by side: <code>release</code> is optimized for
-  size (<code>ReleaseSmall</code>, no debug info) and <code>debug</code> is unoptimized with full
-  symbols. Release is the default — it links smaller and doesn't pull the SDK's debug info into your
-  title; switch to <code>debug</code> when you want to step into SDK code.
+  Whether this project's <em>own</em> sources are compiled as Debug or Release: <code>debug</code> compiles
+  unoptimized with debug info (<code>-O0 -g</code>); <code>release</code> compiles optimized
+  (<code>-O3</code>). Inside a <a href="#configurations"><code>configurations</code></a> block it is what
+  makes that block Debug or Release &mdash; the block's <em>name</em> doesn't. Omitted means
+  <code>release</code>, so a block called <code>"Debug"</code> without <code>"configuration": "debug"</code>
+  builds optimized.
 </p>
 <blockquote>
-  This selects the variant of the <em>prebuilt SDK libraries</em> only. How your <em>own</em> sources
-  are compiled is a separate, machine-level setting (<strong>RXDK: Set Build Type</strong> /
-  <code>rxdk.optimize</code>).
+  This flag does <strong>not</strong> pick the SDK library variant. The Debug/Release SDK libraries are
+  chosen only by the file names you list in <a href="#libraries"><code>libraries</code></a>, so keep the two
+  in step (<code>"configuration": "debug"</code> alongside the <code>…d.lib</code> names). The
+  <strong>RXDK: Set Build Type</strong> setting (<code>rxdk.optimize</code>) is not used by RXDK: Build;
+  the optimize level comes from this field.
 </blockquote>
+
+<h3 id="configurations"><code>configurations</code></h3>
+<p><strong>Type:</strong> <code>object</code> (configuration name &rarr; manifest fields) · Optional</p>
+<p>
+  Named build configurations, usually <code>"Debug"</code> and <code>"Release"</code>. Each value is a
+  partial manifest; when a configuration is built, every field it sets replaces the top-level field of the
+  same name, and every field it leaves out falls back to the top level. Lists replace rather than merge:
+  a block's <code>libraries</code> or <code>defines</code> are the whole list for that configuration.
+  Any field can be overridden this way; the templates put <code>configuration</code>,
+  <code>libraries</code>, <code>outputDir</code> and <code>imageBuild</code> in each block.
+</p>
+<p>
+  Pick the configuration to build with <strong>RXDK: Select Configuration</strong>. Names are matched
+  case-insensitively. If none is selected, RXDK uses <code>defaultConfiguration</code>, or the first
+  configuration listed. Without <code>configurations</code> the manifest is a single
+  <a href="#flat">flat</a> configuration.
+</p>
+
+<h3><code>defaultConfiguration</code></h3>
+<p><strong>Type:</strong> <code>string</code> · Optional (default: the first key in <code>configurations</code>)</p>
+<p>The configuration to build when none has been selected, e.g. <code>"Debug"</code>.</p>
 
 <h3 id="projectReferences"><code>projectReferences</code></h3>
 <p><strong>Type:</strong> <code>string[]</code> · Optional · Executable or library projects</p>
@@ -241,15 +355,32 @@
 <ul>
   <li>resolves <code>projectReferences</code> <strong>transitively</strong> (libraries may reference libraries) and builds them in dependency order (cycles are reported);</li>
   <li>adds every referenced library's <a href="#publicIncludePaths"><code>publicIncludePaths</code></a> to the compile include path;</li>
-  <li>links the built <code>.lib</code>s (in a link group, so inter-library references resolve regardless of order) and merges each library's SDK <code>libraries</code> into the final link (<code>libkernel</code> kept last).</li>
+  <li>links the built <code>.lib</code>s (in a link group, so inter-library references resolve regardless of order) and merges each library's SDK <code>libraries</code> into the final link (deduplicated, <code>libkernel.lib</code> kept last).</li>
 </ul>
+<p>
+  A library project never links anything itself, so its <code>libraries</code> only matter to the
+  executable that references it. A referenced library's manifest is read using <em>its own</em>
+  <code>defaultConfiguration</code> (or its first configuration), not the configuration the executable is
+  building. If that configuration's <code>&lt;outputDir&gt;/&lt;name&gt;.lib</code> already exists it is linked
+  as-is; otherwise RXDK builds it, compiling Debug or Release to match the executable. After changing a
+  library's sources, build the library's own folder (or delete its <code>.lib</code>) so the executable
+  doesn't link a stale copy. For the SDK libraries the simplest rule is the
+  one the templates follow: list every SDK library, including <code>libcpp.lib</code>/<code>libcppd.lib</code>
+  when the library's code or the SDK libraries it uses are C++, in the <strong>executable's</strong>
+  per-configuration <code>libraries</code>, and give library projects no <code>libraries</code> of their own.
+</p>
 
 <p><strong>Library</strong> — <code>libs/mathlib/rxdk.project.json</code>:</p>
 <pre><code>{
   "name": "mathlib",
   "type": "library",
   "sources": ["src/mathlib.cpp"],
-  "publicIncludePaths": ["include"]
+  "publicIncludePaths": ["include"],
+  "defaultConfiguration": "Debug",
+  "configurations": {
+    "Debug":   { "configuration": "debug",   "outputDir": "out/Debug" },
+    "Release": { "configuration": "release", "outputDir": "out/Release" }
+  }
 }</code></pre>
 
 <p><strong>Executable</strong> — <code>game/rxdk.project.json</code>:</p>
@@ -257,8 +388,20 @@
   "name": "mygame",
   "sources": ["src/main.cpp"],
   "projectReferences": ["../libs/mathlib"],
-  "libraries": ["libd3d8", "libxapi", "libc", "libcpp", "libkernel"],
-  "imageBuild": { "debug": true, "stackSize": 65536 }
+  "imageBuild": { "debug": true, "stackSize": 65536 },
+  "defaultConfiguration": "Debug",
+  "configurations": {
+    "Debug": {
+      "configuration": "debug",
+      "libraries": ["libd3d8d.lib", "libxapid.lib", "libcd.lib", "libcppd.lib", "libkerneld.lib", "libcompatd.lib"],
+      "outputDir": "out/Debug"
+    },
+    "Release": {
+      "configuration": "release",
+      "libraries": ["libd3d8.lib", "libxapi.lib", "libc.lib", "libcpp.lib", "libkernel.lib", "libcompat.lib"],
+      "outputDir": "out/Release"
+    }
+  }
 }</code></pre>
 <p>
   <code>src/main.cpp</code> can now <code>#include "mathlib.h"</code> (from the library's
